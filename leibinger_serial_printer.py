@@ -215,10 +215,17 @@ def wait_for_ready(printer: LeibingerPrinter):
 
 
 def send_records(printer, serials, next_no, count):
-    """Send up to count records starting at next_no. Returns the next record number to send."""
+    """Send up to count records starting at next_no. Returns the next record number to send.
+
+    After the last serial a blank end-marker record is added: the printer stops with an
+    error if its mailing queue runs empty, so the last serial must never be the last
+    record in the queue. The script stops printing as soon as the last serial is printed.
+    """
     end = min(len(serials), next_no + count - 1)
     for no in range(next_no, end + 1):
         printer.send_mail_record(no, serials[no - 1])
+    if end == len(serials):
+        printer.send_mail_record(end + 1, "")
     return end + 1
 
 
@@ -229,17 +236,11 @@ def prime_and_start(printer, serials, first_no, auto_start):
     printer.send("!FF")                       # clear any old records
     time.sleep(0.3)
 
-    # Stop automatically after the last record. Not essential: without it the printer
-    # stops with a "mailing buffer empty" message after the last serial instead.
-    for _ in range(5):
-        printer.send(f"=CM{len(serials)}")
-        time.sleep(0.3)
-        sm = printer.mail_status()
-        if sm["stop_at"] == len(serials):
-            break
-    else:
-        print(f"  [NOTE] Printer does not confirm auto-stop at record {len(serials)} (reports "
-              f"{sm['stop_at']}). Continuing - the printer may show a message after the last serial.")
+    # Ask the printer to stop after the last record. Not every firmware accepts this
+    # (the JET2neo V75.0.11.2 reports 0) - the blank end marker + !ST cover the end anyway.
+    printer.send(f"=CM{len(serials)}")
+    time.sleep(0.3)
+    sm = printer.mail_status()
 
     next_no = send_records(printer, serials, first_no, sm["depth"] - 1)
     sent = next_no - first_no
@@ -260,6 +261,7 @@ def prime_and_start(printer, serials, first_no, auto_start):
     if not auto_start:
         input("  Press ENTER to start printing (each sensor trigger prints the next serial)...")
     printer.send("!GO")
+    printer.send(f"=CM{len(serials)}")        # some firmware only keeps this once printing
     print("  Printing started - waiting for products on the sensor.\n")
     return next_no
 
@@ -283,7 +285,6 @@ def run(args):
 
     try:
         next_no = prime_and_start(printer, serials, logged + 1, args.yes)
-        counter_at_start, logged_at_start = printer.total_print_counter(), logged
         fifo_depth = printer.mail_status()["depth"]
         was_printing = False
 
@@ -293,13 +294,16 @@ def run(args):
             st = printer.status()
 
             # Log everything the printer reports as printed since the last poll
-            last = sm["last_printed"]
-            if logged < last <= total:
+            last = min(sm["last_printed"], total)   # total+1 = blank end marker
+            if logged < last:
                 rows = [(no, serials[no - 1]) for no in range(logged + 1, last + 1)]
                 append_log(args.log, rows)
                 for no, serial in rows:
                     print(f"  [PRINTED] {no}/{total}: {serial}")
                 logged = last
+                if logged >= total:
+                    printer.send("!ST")   # stop before the next product gets the blank marker
+                    break
 
             if st["state"] == STATE_PRINTING:
                 was_printing = True
@@ -314,17 +318,12 @@ def run(args):
 
             # Printing stopped before the end (operator stop, error, ...). The printer
             # clears its FIFO on stop, so re-queue from the first unprinted record.
-            prints = printer.total_print_counter() - counter_at_start
             print(f"\n[STOPPED] Printing stopped after record {logged} "
                   f"({STATE_NAMES.get(st['state'], st['state'])}, error {error_code(st['error'])}).")
-            if prints != logged - logged_at_start:
-                print(f"  [WARNING] Printer counted {prints} prints but {logged - logged_at_start} serials "
-                      "were reported printed. Check the last products on the line before resuming.")
             next_no = prime_and_start(printer, serials, logged + 1, auto_start=False)
-            counter_at_start, logged_at_start = printer.total_print_counter(), logged
             was_printing = False
 
-        print(f"\n[SUCCESS] All {total} records printed. Log: {args.log}")
+        print(f"\n[SUCCESS] All {total} records printed - printing stopped. Log: {args.log}")
     finally:
         printer.close()
 
