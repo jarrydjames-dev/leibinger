@@ -1,28 +1,29 @@
 """
 Leibinger JET2neo - sensor-triggered unique serial printing (Avis Labs)
 
-How it works
-------------
-The PRINTER owns the trigger, not this script. The external photo-eye is wired
-to the printer's product-detection (print-go) input. Each time the sensor fires,
-the printer prints whatever is currently in field 1 and its print counter (?PC)
-goes up by one.
+Uses the printer's MAILING mode (Leibinger Interface Protocol v1.9.15, Annex B):
 
-This script:
-  1. Reads the print counter (baseline).
-  2. Loads the next serial into field 1 (=ST1...).
-  3. Waits - indefinitely - until the counter goes up by exactly 1
-     (= one product passed the sensor and was printed).
-  4. Logs the serial as printed, then loads the next one.
+  * Serials are sent into the printer's mailing FIFO (up to 256 records) with
+    ^0=MR<record no><TAB><serial>.
+  * On every PrintGo signal (the photo-eye) the printer prints the NEXT record
+    from the FIFO. No sensor signal = no print. The printer itself blocks double
+    prints and stops with an error if a record is missing or out of order.
+  * This script keeps the FIFO topped up, logs every serial the printer reports
+    as printed (^0?SM "last printed record number"), and makes the printer stop
+    automatically after the last serial (^0=CM).
 
-It never advances on a timer. If the counter cannot be read, it stops instead of
-guessing, so a serial is never skipped or silently re-used.
+Printer setup:
+  * Extra / Interface settings / Communication interface: Ethernet, protocol JET3, port 3000
+  * Extra / Database setting / "Activate database" must be OFF
+  * The print job needs a text object with an EXTERN TEXT field in mail mode,
+    field number 1, with enough placeholder characters for the serial.
+  * Job PrintGo source: External (the photo-eye), not internal.
 
 Usage
 -----
-    python leibinger_serial_printer.py                  # uses defaults below
+    python leibinger_serial_printer.py --test-connection   # check comms + job
+    python leibinger_serial_printer.py                     # print Data.csv
     python leibinger_serial_printer.py --file Data.xlsx --ip 192.168.1.100
-    python leibinger_serial_printer.py --test-connection  # show raw ?PC reply
 """
 
 import argparse
@@ -40,21 +41,19 @@ import pandas as pd
 # 1. CONFIGURATION
 # ==========================================
 PRINTER_IP = "192.168.1.100"   # Printer IP address
-PRINTER_PORT = 2201            # Leibinger TCP interface port
+PRINTER_PORT = 3000            # Leibinger interface port (manual default: 3000)
 INPUT_FILE = "Data.csv"        # .csv, .xlsx or .xls - serials in the first column
 PRINT_LOG = "print_log.csv"    # Every printed serial is appended here (audit + resume)
 
-# Protocol - check these against the interface manual for your firmware
-STX = b"\x02"
-CR = b"\x0d"
-FRAME_END = re.compile(rb"[\r\n\x03]+")  # replies may end in CR, LF or ETX
-CMD_GET_COUNTER = "?PC"        # Query print counter
-REPLY_COUNTER = "=PC"          # Counter reply prefix, e.g. '=PC104'
-CMD_SET_FIELD = "=ST1"         # Load text into field 1
+POLL_INTERVAL = 0.2            # Seconds between status polls
+REPLY_TIMEOUT = 2.0            # Seconds to wait for a reply to a query
+REFILL_BLOCK = 50              # Top up the FIFO once this many slots are free
 
-POLL_INTERVAL = 0.05           # Seconds between counter polls while waiting for a product
-REPLY_TIMEOUT = 2.0            # Seconds to wait for a reply to a single query
-MAX_QUERY_FAILURES = 5         # Consecutive failed counter reads before stopping
+# Machine states from ^0=RS parameter 2
+STATE_NAMES = {1: "Standby", 2: "Initialising", 3: "Interval/Service",
+               4: "Ready for action (jet not ready to print)",
+               5: "Ready for print start", 6: "Printing"}
+STATE_READY, STATE_PRINTING = 5, 6
 
 
 class PrinterError(Exception):
@@ -62,14 +61,11 @@ class PrinterError(Exception):
 
 
 # ==========================================
-# 2. PRINTER CONNECTION
+# 2. PRINTER CONNECTION (^0 ... <CR> frames)
 # ==========================================
 class LeibingerPrinter:
-    """TCP connection that reads whole STX...CR frames, so replies never get mixed up."""
-
     def __init__(self, ip: str, port: int):
-        self.ip = ip
-        self.port = port
+        self.ip, self.port = ip, port
         self.sock = None
         self._buffer = b""
 
@@ -82,63 +78,71 @@ class LeibingerPrinter:
             self.sock.close()
             self.sock = None
 
-    @staticmethod
-    def _frame(payload: str) -> bytes:
-        return STX + payload.strip().encode("ascii") + CR
-
     def send(self, payload: str):
-        self.sock.sendall(self._frame(payload))
+        self.sock.sendall(b"^0" + payload.encode("latin-1") + b"\r")
 
-    def _read_frame(self, deadline: float):
-        """Return the next complete reply (without STX/terminator), or None on timeout."""
-        while not FRAME_END.search(self._buffer):
+    def read_line(self, deadline: float):
+        """Next reply line without the ^0 prefix and CR/LF, or None on timeout."""
+        while True:
+            m = re.search(rb"[\r\n]", self._buffer)
+            if m:
+                line, self._buffer = self._buffer[:m.start()], self._buffer[m.end():]
+                line = line.strip()
+                if not line:
+                    continue          # empty line / LF after CR
+                if line.startswith(b"^0"):
+                    line = line[2:]
+                return line.decode("latin-1")
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 return None
             self.sock.settimeout(remaining)
             try:
-                chunk = self.sock.recv(1024)
+                chunk = self.sock.recv(4096)
             except socket.timeout:
                 return None
             if not chunk:
                 raise PrinterError("Printer closed the connection")
             self._buffer += chunk
-        frame, self._buffer = FRAME_END.split(self._buffer, maxsplit=1)
-        return frame.replace(STX, b"").decode("ascii", errors="ignore").strip()
 
-    def drain(self):
-        """Throw away any replies waiting in the buffer (e.g. acks to =ST1)."""
-        self._buffer = b""
-        self.sock.settimeout(0.0)
-        try:
-            while self.sock.recv(4096):
-                pass
-        except (BlockingIOError, socket.timeout):
-            pass
-        finally:
-            self.sock.settimeout(REPLY_TIMEOUT)
+    def query(self, code: str, timeout: float = REPLY_TIMEOUT):
+        """Send ?XX and return the parameters of the =XX reply (other lines are skipped)."""
+        self.send("?" + code)
+        deadline = time.monotonic() + timeout
+        while (line := self.read_line(deadline)) is not None:
+            if line.startswith("=" + code):
+                return line[len(code) + 1:]
+        raise PrinterError(f"No reply to ?{code} - check IP/port and that the interface protocol is JET3")
 
-    def query(self, payload: str, reply_prefix: str):
-        """Send a query and return the first reply that starts with reply_prefix.
-        Other replies (acks, status messages) are skipped."""
-        self.send(payload)
-        deadline = time.monotonic() + REPLY_TIMEOUT
-        while True:
-            frame = self._read_frame(deadline)
-            if frame is None:
-                return None
-            if frame.startswith(reply_prefix):
-                return frame
+    def query_numbers(self, code: str):
+        return [int(n) for n in re.findall(r"-?\d+", self.query(code))]
 
-    def get_print_count(self):
-        reply = self.query(CMD_GET_COUNTER, REPLY_COUNTER)
-        if reply is None:
-            return None
-        match = re.search(r"-?\d+", reply[len(REPLY_COUNTER):])
-        return int(match.group()) if match else None
+    def status(self):
+        p = self.query_numbers("RS")   # nozzle, machine state, error, head cover, speed, job change
+        return {"nozzle": p[0], "state": p[1], "error": p[2] if len(p) > 2 else 0}
 
-    def set_field_text(self, text: str):
-        self.send(f"{CMD_SET_FIELD}{text}")
+    def mail_status(self):
+        p = self.query_numbers("SM")   # fifo depth, entries, last printed, stop at, finished, printgos
+        return {"depth": p[0], "entries": p[1], "last_printed": p[2], "stop_at": p[3]}
+
+    def total_print_counter(self):
+        p = self.query_numbers("CC")   # product counter, stop after X, total print counter
+        return p[2] if len(p) > 2 else p[0]
+
+    def send_mail_record(self, number: int, text: str):
+        self.send(f"=MR{number}\t{escape_field(text)}")
+
+
+def escape_field(text: str) -> str:
+    """^ and \\ must be escaped in data; TAB/CR/LF are not allowed."""
+    if re.search(r"[\t\r\n]", text):
+        raise ValueError(f"Serial {text!r} contains a TAB or line break")
+    return text.replace("\\", "\\\\").replace("^", "\\^")
+
+
+def error_code(raw: int) -> int:
+    """=RS error number: bits 25-31 are flags, the rest is the error code."""
+    return raw & 0x1FFFFFF
 
 
 # ==========================================
@@ -157,23 +161,34 @@ def load_serials(path: str):
     dupes = sorted(set(s[s.duplicated()]))
     if dupes:
         raise ValueError(f"Dataset contains duplicate serials, e.g. {dupes[:5]}")
+    for serial in serials:
+        escape_field(serial)
     return serials
 
 
-def load_already_printed(log_path: str):
+def last_logged_record(log_path: str, serials) -> int:
+    """Highest record number already printed according to the log (0 = none)."""
     if not os.path.exists(log_path):
-        return set()
+        return 0
+    last = 0
     with open(log_path, newline="") as f:
-        return {row["serial"] for row in csv.DictReader(f)}
+        for row in csv.DictReader(f):
+            no = int(row["record"])
+            if no > len(serials) or serials[no - 1] != row["serial"]:
+                raise ValueError(f"'{log_path}' does not match the data file (record {no}). "
+                                 "Use a new --log file for a new dataset.")
+            last = max(last, no)
+    return last
 
 
-def append_log(log_path: str, index: int, serial: str, counter: int):
+def append_log(log_path: str, rows):
     new_file = not os.path.exists(log_path)
     with open(log_path, "a", newline="") as f:
         writer = csv.writer(f)
         if new_file:
-            writer.writerow(["timestamp", "index", "serial", "printer_counter"])
-        writer.writerow([dt.datetime.now().isoformat(timespec="seconds"), index, serial, counter])
+            writer.writerow(["timestamp", "record", "serial"])
+        now = dt.datetime.now().isoformat(timespec="seconds")
+        writer.writerows([now, no, serial] for no, serial in rows)
         f.flush()
         os.fsync(f.fileno())
 
@@ -181,120 +196,151 @@ def append_log(log_path: str, index: int, serial: str, counter: int):
 # ==========================================
 # 4. MAIN LOOP
 # ==========================================
-def read_counter_or_fail(printer: LeibingerPrinter) -> int:
-    for _ in range(MAX_QUERY_FAILURES):
-        count = printer.get_print_count()
-        if count is not None:
-            return count
-        time.sleep(0.2)
-    raise PrinterError(
-        f"No valid '{REPLY_COUNTER}' reply to '{CMD_GET_COUNTER}' after "
-        f"{MAX_QUERY_FAILURES} tries. Run with --test-connection to see what the printer returns."
-    )
-
-
-def wait_for_print(printer: LeibingerPrinter, baseline: int) -> int:
-    """Block until the sensor triggers one print. Returns the new counter value."""
-    failures = 0
+def wait_for_ready(printer: LeibingerPrinter):
+    announced = None
     while True:
-        count = printer.get_print_count()
-        if count is None:
-            failures += 1
-            if failures >= MAX_QUERY_FAILURES:
-                raise PrinterError("Lost counter replies while waiting for a product")
+        st = printer.status()
+        if st["state"] == STATE_READY and st["error"] == 0:
+            return
+        if st["state"] == STATE_PRINTING:
+            msg = "Printer is PRINTING - stop printing on the printer so the queue can be loaded cleanly."
+        elif st["error"]:
+            msg = f"Printer reports error/message {error_code(st['error'])} - acknowledge it on the printer."
         else:
-            failures = 0
-            if count < baseline:
-                raise PrinterError(
-                    f"Print counter went backwards ({baseline} -> {count}). "
-                    "Was it reset on the printer? Stopping to avoid mis-tracking serials."
-                )
-            if count > baseline:
-                return count
-        time.sleep(POLL_INTERVAL)
+            msg = f"Printer state: {STATE_NAMES.get(st['state'], st['state'])} - start the jet."
+        if msg != announced:
+            print(f"    ... {msg}")
+            announced = msg
+        time.sleep(1.0)
+
+
+def send_records(printer, serials, next_no, count):
+    """Send up to count records starting at next_no. Returns the next record number to send."""
+    end = min(len(serials), next_no + count - 1)
+    for no in range(next_no, end + 1):
+        printer.send_mail_record(no, serials[no - 1])
+    return end + 1
+
+
+def prime_and_start(printer, serials, first_no, auto_start):
+    """Load the FIFO starting at record first_no, set auto-stop, start printing."""
+    wait_for_ready(printer)
+    printer.send("!FF")                       # clear any old records
+    printer.send(f"=CM{len(serials)}")        # stop automatically after the last record
+    sm = printer.mail_status()
+    if sm["stop_at"] != len(serials):
+        raise PrinterError(f"Printer did not accept stop-at record {len(serials)} (reports {sm['stop_at']}). "
+                           "Is 'Activate database' switched off and does the job contain a mailing field?")
+
+    next_no = send_records(printer, serials, first_no, sm["depth"] - 1)
+    print(f"\n  {next_no - first_no} serial(s) queued in the printer (records {first_no}..{next_no - 1}).")
+    if not auto_start:
+        input("  Press ENTER to start printing (each sensor trigger prints the next serial)...")
+    printer.send("!GO")
+    print("  Printing started - waiting for products on the sensor.\n")
+    return next_no
 
 
 def run(args):
-    print("Leibinger JET2neo - Sensor-Triggered Serial Printing\n")
+    print("Leibinger JET2neo - Sensor-Triggered Serial Printing (mailing mode)\n")
 
     print(f"Loading data from '{args.file}'...")
     serials = load_serials(args.file)
-    done = load_already_printed(args.log)
-    todo = [(i, s) for i, s in enumerate(serials, start=1) if s not in done]
-    print(f"Found {len(serials)} records, {len(done)} already printed, {len(todo)} to go.\n")
-    if not todo:
+    total = len(serials)
+    logged = last_logged_record(args.log, serials)
+    print(f"Found {total} records, {logged} already printed, {total - logged} to go.")
+    if logged >= total:
         print("[SUCCESS] Nothing left to print.")
         return
 
     printer = LeibingerPrinter(args.ip, args.port)
     print(f"Connecting to JET2neo at {args.ip}:{args.port}...")
     printer.connect()
-    print("Connected.\n")
+    print("Connected.")
 
     try:
-        for index, serial in todo:
-            # Baseline BEFORE loading: a trigger that happens between here and the
-            # load would print old text - that shows up as a counter jump below.
-            baseline = read_counter_or_fail(printer)
+        next_no = prime_and_start(printer, serials, logged + 1, args.yes)
+        counter_at_start, logged_at_start = printer.total_print_counter(), logged
+        fifo_depth = printer.mail_status()["depth"]
+        was_printing = False
 
-            printer.set_field_text(serial)
-            time.sleep(0.05)   # let the printer apply the new text
-            printer.drain()    # discard the =ST1 ack so it can't be mistaken for a reply
+        while logged < total:
+            time.sleep(POLL_INTERVAL)
+            sm = printer.mail_status()
+            st = printer.status()
 
-            print(f"[{index}/{len(serials)}] Loaded '{serial}' - waiting for sensor trigger...")
-            new_count = wait_for_print(printer, baseline)
-            printed = new_count - baseline
+            # Log everything the printer reports as printed since the last poll
+            last = sm["last_printed"]
+            if logged < last <= total:
+                rows = [(no, serials[no - 1]) for no in range(logged + 1, last + 1)]
+                append_log(args.log, rows)
+                for no, serial in rows:
+                    print(f"  [PRINTED] {no}/{total}: {serial}")
+                logged = last
 
-            append_log(args.log, index, serial, new_count)
-            print(f"    [PRINTED] counter {baseline} -> {new_count}")
+            if st["state"] == STATE_PRINTING:
+                was_printing = True
+                queued = (next_no - 1) - logged        # sent but not yet printed
+                free = fifo_depth - 1 - queued
+                if next_no <= total and free >= REFILL_BLOCK:
+                    next_no = send_records(printer, serials, next_no, free)
+                continue
 
-            if printed > 1:
-                raise PrinterError(
-                    f"Counter jumped by {printed} while '{serial}' was loaded - "
-                    f"{printed - 1} product(s) may carry a duplicate/old code. "
-                    "Pull those products and check the line before restarting."
-                )
+            if logged >= total or not was_printing:
+                continue   # finished, or !GO not processed yet
 
-        print("\n[SUCCESS] All records printed.")
+            # Printing stopped before the end (operator stop, error, ...). The printer
+            # clears its FIFO on stop, so re-queue from the first unprinted record.
+            prints = printer.total_print_counter() - counter_at_start
+            print(f"\n[STOPPED] Printing stopped after record {logged} "
+                  f"({STATE_NAMES.get(st['state'], st['state'])}, error {error_code(st['error'])}).")
+            if prints != logged - logged_at_start:
+                print(f"  [WARNING] Printer counted {prints} prints but {logged - logged_at_start} serials "
+                      "were reported printed. Check the last products on the line before resuming.")
+            next_no = prime_and_start(printer, serials, logged + 1, auto_start=False)
+            counter_at_start, logged_at_start = printer.total_print_counter(), logged
+            was_printing = False
+
+        print(f"\n[SUCCESS] All {total} records printed. Log: {args.log}")
     finally:
         printer.close()
 
 
 def test_connection(args):
-    """Send ?PC and dump every raw byte the printer returns, so the reply format can be checked."""
-    printer = LeibingerPrinter(args.ip, args.port)
-    printer.connect()
-    try:
-        def dump(seconds):
-            data = b""
-            end = time.monotonic() + seconds
-            while (remaining := end - time.monotonic()) > 0:
-                printer.sock.settimeout(remaining)
-                try:
-                    chunk = printer.sock.recv(1024)
-                except socket.timeout:
-                    break
-                if not chunk:
-                    print("  (printer closed the connection)")
-                    break
-                data += chunk
-            return data
+    for port in dict.fromkeys([args.port, 3000, 2201]):
+        print(f"--- {args.ip}:{port} ---")
+        printer = LeibingerPrinter(args.ip, port)
+        try:
+            printer.connect()
+        except OSError as e:
+            print(f"  cannot connect: {e}\n")
+            continue
+        try:
+            print(f"  Version       : {printer.query('VS').split(chr(9))}")
+            st = printer.status()
+            print(f"  Machine state : {STATE_NAMES.get(st['state'], st['state'])}, "
+                  f"error {error_code(st['error'])}")
+            sm = printer.mail_status()
+            print(f"  Mailing FIFO  : depth {sm['depth']}, entries {sm['entries']}, "
+                  f"last printed {sm['last_printed']}")
+            print(f"  Print counter : {printer.total_print_counter()}")
+            print(f"  Loaded job    : {printer.query('JL').split(chr(9))[0]}")
 
-        print("Connected. Listening 2s for anything the printer sends unprompted...")
-        unprompted = dump(2.0)
-        print(f"  raw: {unprompted!r}" if unprompted else "  (nothing)")
-
-        packet = LeibingerPrinter._frame(CMD_GET_COUNTER)
-        print(f"\nSending {packet!r} and listening 3s...")
-        printer.sock.sendall(packet)
-        reply = dump(3.0)
-        if reply:
-            print(f"  raw: {reply!r}")
-            print(f"  hex: {reply.hex(' ')}")
-        else:
-            print("  (no reply at all)")
-    finally:
-        printer.close()
+            printer.send("?JB")
+            lines, deadline = [], time.monotonic() + 3.0
+            while (line := printer.read_line(deadline)) is not None:
+                lines.append(line)
+                if "ENDLJSCRIPT" in line:
+                    break
+            fields = [l for l in lines if "EXTTXT" in l]
+            print("  Extern-text fields in the job (3rd value = field no.; must be 1 for mailing):")
+            for l in fields or ["(none found - the job has no extern text / mailing field!)"]:
+                print(f"    {l}")
+            print(f"\n  OK - this port works. Use --port {port}\n")
+        except PrinterError as e:
+            print(f"  connected, but: {e}\n")
+        finally:
+            printer.close()
 
 
 def main():
@@ -303,14 +349,15 @@ def main():
     parser.add_argument("--ip", default=PRINTER_IP)
     parser.add_argument("--port", type=int, default=PRINTER_PORT)
     parser.add_argument("--log", default=PRINT_LOG)
+    parser.add_argument("--yes", action="store_true", help="Start printing without pressing ENTER")
     parser.add_argument("--test-connection", action="store_true",
-                        help="Query the print counter once and show the raw reply")
+                        help="Check communication, printer state and the loaded job")
     args = parser.parse_args()
 
     try:
         test_connection(args) if args.test_connection else run(args)
     except KeyboardInterrupt:
-        print("\n[STOPPED] by operator. Re-run to resume from the log.")
+        print("\n[STOPPED] by operator. Stop printing on the printer; re-run to resume from the log.")
     except (PrinterError, ValueError, OSError) as e:
         print(f"\n[ERROR] {e}")
         sys.exit(1)
