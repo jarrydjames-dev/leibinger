@@ -47,6 +47,7 @@ PRINT_LOG = "print_log.csv"    # Every printed serial is appended here (audit + 
 # Protocol - check these against the interface manual for your firmware
 STX = b"\x02"
 CR = b"\x0d"
+FRAME_END = re.compile(rb"[\r\n\x03]+")  # replies may end in CR, LF or ETX
 CMD_GET_COUNTER = "?PC"        # Query print counter
 REPLY_COUNTER = "=PC"          # Counter reply prefix, e.g. '=PC104'
 CMD_SET_FIELD = "=ST1"         # Load text into field 1
@@ -89,8 +90,8 @@ class LeibingerPrinter:
         self.sock.sendall(self._frame(payload))
 
     def _read_frame(self, deadline: float):
-        """Return the next complete reply (without STX/CR), or None on timeout."""
-        while CR not in self._buffer:
+        """Return the next complete reply (without STX/terminator), or None on timeout."""
+        while not FRAME_END.search(self._buffer):
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 return None
@@ -102,7 +103,7 @@ class LeibingerPrinter:
             if not chunk:
                 raise PrinterError("Printer closed the connection")
             self._buffer += chunk
-        frame, _, self._buffer = self._buffer.partition(CR)
+        frame, self._buffer = FRAME_END.split(self._buffer, maxsplit=1)
         return frame.replace(STX, b"").decode("ascii", errors="ignore").strip()
 
     def drain(self):
@@ -260,15 +261,38 @@ def run(args):
 
 
 def test_connection(args):
+    """Send ?PC and dump every raw byte the printer returns, so the reply format can be checked."""
     printer = LeibingerPrinter(args.ip, args.port)
     printer.connect()
     try:
-        printer.send(CMD_GET_COUNTER)
-        deadline = time.monotonic() + REPLY_TIMEOUT
-        print(f"Sent {CMD_GET_COUNTER!r}. Raw replies:")
-        while (frame := printer._read_frame(deadline)) is not None:
-            print(f"  {frame!r}")
-        print(f"Parsed counter: {printer.get_print_count()}")
+        def dump(seconds):
+            data = b""
+            end = time.monotonic() + seconds
+            while (remaining := end - time.monotonic()) > 0:
+                printer.sock.settimeout(remaining)
+                try:
+                    chunk = printer.sock.recv(1024)
+                except socket.timeout:
+                    break
+                if not chunk:
+                    print("  (printer closed the connection)")
+                    break
+                data += chunk
+            return data
+
+        print("Connected. Listening 2s for anything the printer sends unprompted...")
+        unprompted = dump(2.0)
+        print(f"  raw: {unprompted!r}" if unprompted else "  (nothing)")
+
+        packet = LeibingerPrinter._frame(CMD_GET_COUNTER)
+        print(f"\nSending {packet!r} and listening 3s...")
+        printer.sock.sendall(packet)
+        reply = dump(3.0)
+        if reply:
+            print(f"  raw: {reply!r}")
+            print(f"  hex: {reply.hex(' ')}")
+        else:
+            print("  (no reply at all)")
     finally:
         printer.close()
 
