@@ -225,15 +225,38 @@ def send_records(printer, serials, next_no, count):
 def prime_and_start(printer, serials, first_no, auto_start):
     """Load the FIFO starting at record first_no, set auto-stop, start printing."""
     wait_for_ready(printer)
+    time.sleep(1.0)                           # a print stop clears mailing data - let it settle
     printer.send("!FF")                       # clear any old records
-    printer.send(f"=CM{len(serials)}")        # stop automatically after the last record
-    sm = printer.mail_status()
-    if sm["stop_at"] != len(serials):
-        raise PrinterError(f"Printer did not accept stop-at record {len(serials)} (reports {sm['stop_at']}). "
-                           "Is 'Activate database' switched off and does the job contain a mailing field?")
+    time.sleep(0.3)
+
+    # Stop automatically after the last record. Not essential: without it the printer
+    # stops with a "mailing buffer empty" message after the last serial instead.
+    for _ in range(5):
+        printer.send(f"=CM{len(serials)}")
+        time.sleep(0.3)
+        sm = printer.mail_status()
+        if sm["stop_at"] == len(serials):
+            break
+    else:
+        print(f"  [NOTE] Printer does not confirm auto-stop at record {len(serials)} (reports "
+              f"{sm['stop_at']}). Continuing - the printer may show a message after the last serial.")
 
     next_no = send_records(printer, serials, first_no, sm["depth"] - 1)
-    print(f"\n  {next_no - first_no} serial(s) queued in the printer (records {first_no}..{next_no - 1}).")
+    sent = next_no - first_no
+
+    # Check the printer really took the records (FIFO entries = records sent - 1)
+    if sent > 1:
+        for _ in range(10):
+            time.sleep(0.3)
+            sm = printer.mail_status()
+            if sm["entries"] > 0:
+                break
+        else:
+            raise PrinterError(
+                f"Printer did not accept the serials into its mailing queue (?SM reply: {sm}).\n"
+                "  Check: 'Activate database' is OFF, the loaded job has the mailing field "
+                "(EXTTXT field no. 1), and the job was re-loaded after editing.")
+    print(f"\n  {sent} serial(s) queued in the printer (records {first_no}..{next_no - 1}).")
     if not auto_start:
         input("  Press ENTER to start printing (each sensor trigger prints the next serial)...")
     printer.send("!GO")
