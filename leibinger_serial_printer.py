@@ -24,6 +24,8 @@ Usage
     python leibinger_serial_printer.py --test-connection   # check comms + job
     python leibinger_serial_printer.py                     # print Data.csv
     python leibinger_serial_printer.py --file Data.xlsx --ip 192.168.1.100
+    python leibinger_serial_printer.py --file Data.xlsx --log B1_log.csv --reprint              # whole batch again
+    python leibinger_serial_printer.py --file Data.xlsx --log B1_log.csv --reprint --from 3 --to 4  # records 3-4 again
 """
 
 import argparse
@@ -266,16 +268,41 @@ def prime_and_start(printer, serials, first_no, auto_start):
     return next_no
 
 
+def archive_log_for_reprint(args, first, total, serials):
+    """Move the existing log aside (kept for the audit trail) so the batch can be printed again."""
+    with open(args.log, newline="") as f:
+        already = sum(1 for row in csv.DictReader(f) if first <= int(row["record"]) <= total)
+    print(f"\n  REPRINT: '{args.log}' shows {already} of records {first}..{total} already printed.")
+    print(f"  Reprinting puts serials {serials[first - 1]} .. {serials[total - 1]} on NEW products -")
+    print("  make sure the first-run products with these serials are removed/destroyed.")
+    if not args.yes and input("  Type YES to reprint: ").strip() != "YES":
+        raise ValueError("Reprint cancelled")
+    stem, ext = os.path.splitext(args.log)
+    archived = f"{stem}_before_reprint_{dt.datetime.now():%Y%m%d_%H%M%S}{ext}"
+    os.replace(args.log, archived)
+    print(f"  Previous log kept as '{archived}'. Starting a new '{args.log}'.\n")
+
+
 def run(args):
     print("Leibinger JET2neo - Sensor-Triggered Serial Printing (mailing mode)\n")
 
     print(f"Loading data from '{args.file}'...")
     serials = load_serials(args.file)
-    total = len(serials)
+    first = args.from_record or 1
+    total = args.to_record or len(serials)
+    if not 1 <= first <= total <= len(serials):
+        raise ValueError(f"--from/--to must be within 1..{len(serials)} (got {first}..{total})")
+
+    if args.reprint and os.path.exists(args.log):
+        archive_log_for_reprint(args, first, total, serials)
+
     logged = last_logged_record(args.log, serials)
-    print(f"Found {total} records, {logged} already printed, {total - logged} to go.")
+    print(f"Found {len(serials)} records. Printing records {first}..{total} ({total - first + 1}).")
+    logged = min(max(logged, first - 1), total)
+    serials = serials[:total]          # records after --to are never sent
+    print(f"  {logged - first + 1} already printed, {total - logged} to go.")
     if logged >= total:
-        print("[SUCCESS] Nothing left to print.")
+        print("[SUCCESS] Nothing left to print. To print this batch again, add --reprint")
         return
 
     printer = LeibingerPrinter(args.ip, args.port)
@@ -323,7 +350,7 @@ def run(args):
             next_no = prime_and_start(printer, serials, logged + 1, auto_start=False)
             was_printing = False
 
-        print(f"\n[SUCCESS] All {total} records printed - printing stopped. Log: {args.log}")
+        print(f"\n[SUCCESS] Records {first}..{total} printed - printing stopped. Log: {args.log}")
     finally:
         printer.close()
 
@@ -372,6 +399,10 @@ def main():
     parser.add_argument("--port", type=int, default=PRINTER_PORT)
     parser.add_argument("--log", default=PRINT_LOG)
     parser.add_argument("--yes", action="store_true", help="Start printing without pressing ENTER")
+    parser.add_argument("--reprint", action="store_true",
+                        help="Print the batch (or --from/--to range) again; the old log is kept as a copy")
+    parser.add_argument("--from", dest="from_record", type=int, help="First record number to print (default 1)")
+    parser.add_argument("--to", dest="to_record", type=int, help="Last record number to print (default: last)")
     parser.add_argument("--test-connection", action="store_true",
                         help="Check communication, printer state and the loaded job")
     args = parser.parse_args()
