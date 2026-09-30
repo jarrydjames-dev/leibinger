@@ -1,0 +1,18 @@
+/* =====================================================================
+   BRAND SETTINGS - Marking Solutions
+   Change the colours here and replace the logo files in assets/.
+   The company name in page headers is set in each manual's <style> block (@page).
+   then run build_manuals.sh (or .bat) to regenerate both PDFs.
+   ===================================================================== */
+:root {
+  --brand-ink:      #0B1F33;  /* dark: cover, headings, table headers   */
+  --brand-primary:  #0F5AA6;  /* main brand colour: rules, numbers, links */
+  --brand-accent:   #F5A623;  /* highlight: chapter numbers, warnings   */
+  --brand-tint:     #EAF2FB;  /* light background for notes and tables */
+  --brand-accent-tint: #FEF4E3;
+
+}
+
+/* Logo files (SVG or PNG):
+   assets/company-logo.svg        - full-colour logo, used on white pages
+   assets/company-logo-white.svg  - white/reversed logo, used on the dark cover */

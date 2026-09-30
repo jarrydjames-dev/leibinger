@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>UMS Serialine – User Manual</title>
+<link rel="stylesheet" href="brand.css">
+<link rel="stylesheet" href="manual.css">
+<style>
+  @page {
+    @top-left { content: "UMS Serialine  ·  User Manual"; font: 600 7.5pt "Inter", Arial, sans-serif; color: #5B6675; vertical-align: bottom; padding-bottom: 4mm; }
+    @bottom-left { content: "Marking Solutions"; font: 600 7.5pt "Inter", Arial, sans-serif; color: #5B6675; }
+    @bottom-right { content: "Version 1.0  ·  October 2026"; font: 500 7.5pt "Inter", Arial, sans-serif; color: #5B6675; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="dots"></div>
+  <div class="inner">
+    <div class="product"><img src="assets/serialine-mark.svg" alt=""><span class="ums">UMS</span></div>
+    <h1>Serialine<span class="dot">.</span></h1>
+    <div class="tagline">Unique serial numbers on every product – straight from your file to your line.</div>
+    <div class="doc-type">User Manual</div>
+    <div class="serial-strip">SN&nbsp;000124 <span>›</span> 000125 <span>›</span> 000126</div>
+  </div>
+  <div class="band"></div>
+  <div class="foot">
+    <img src="assets/company-logo.svg" alt="Marking Solutions">
+    <div class="meta"><b>For Leibinger JET2neo printers</b><br>Version 1.0 · October 2026</div>
+  </div>
+</section>
+
+<!-- ============ CONTENTS ============ -->
+<section class="contents">
+  <div class="chapter-head"><div><div class="kicker">User Manual</div><h2>Contents</h2></div></div>
+  <ol class="toc">
+    <li><span class="n">01</span>Welcome to Serialine<span class="d">What it does for you</span></li>
+    <li><span class="n">02</span>How it works<span class="d">From file to product</span></li>
+    <li><span class="n">03</span>What you need<span class="d">Equipment and settings</span></li>
+    <li><span class="n">04</span>Preparing your serial file<span class="d">Format rules</span></li>
+    <li><span class="n">05</span>Printing a batch<span class="d">Daily procedure</span></li>
+    <li><span class="n">06</span>Stops, restarts and reprints<span class="d">When things change</span></li>
+    <li><span class="n">07</span>Your print log<span class="d">Records and traceability</span></li>
+    <li><span class="n">08</span>Troubleshooting<span class="d">Messages and fixes</span></li>
+    <li><span class="n">09</span>Support<span class="d">Contact details</span></li>
+  </ol>
+  <div class="intro-box">
+    <h3>Quick start</h3>
+    <ol class="steps">
+      <li>Printer ready, printing <strong>stopped</strong>.</li>
+      <li>Double-click <strong>Serialine</strong> and type the number of your batch file.</li>
+      <li>Check the serial count, press <strong>ENTER</strong> and run the line.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ 01 WELCOME ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">01</div><div><div class="kicker">Introduction</div><h2>Welcome to Serialine</h2></div></div>
+  <p class="lead">Serialine prints a unique serial number on every product on your line, straight from your Excel or CSV file. Each product that passes the sensor gets the next serial, in order, and every print is recorded.</p>
+  <div class="features">
+    <div class="feature"><div class="t">One serial per product</div><p>Printing is triggered by your line sensor, so a serial only goes on a product that is actually there.</p></div>
+    <div class="feature"><div class="t">No duplicates</div><p>The printer checks the serial sequence itself and never prints the same serial twice.</p></div>
+    <div class="feature"><div class="t">Works from your own files</div><p>Use the Excel or CSV list you already have. No database or special software needed.</p></div>
+    <div class="feature"><div class="t">Full traceability</div><p>A print log records every serial with its date and time, ready for your batch records.</p></div>
+    <div class="feature"><div class="t">Safe restarts</div><p>After a stop, a power cut or a closed window, Serialine continues from the first unprinted serial.</p></div>
+    <div class="feature"><div class="t">Controlled reprints</div><p>A batch is printed again only after explicit confirmation, and the original log is kept.</p></div>
+  </div>
+  <div class="callout"><div class="label">Simple</div><p>Double-click, choose the file, press ENTER. No installation and no technical knowledge needed – your UMS technician sets everything up.</p></div>
+
+  <!-- 02 -->
+  <div class="chapter flow">
+    <div class="chapter-head"><div class="num">02</div><div><div class="kicker">Overview</div><h2>How it works</h2></div></div>
+    <p class="lead">Serialine sends your serials to the printer; your line sensor decides when each one is printed.</p>
+    <div class="flow-diagram">
+      <div class="node"><div class="icon">1</div><div class="t">Serial file</div><div class="s">Your list of unique serials in Excel or CSV</div></div>
+      <div class="node"><div class="icon">2</div><div class="t">Serialine</div><div class="s">Reads the file, sends serials over the network</div></div>
+      <div class="node"><div class="icon">3</div><div class="t">Printer queue</div><div class="s">Holds up to 255 serials ready to print</div></div>
+      <div class="node"><div class="icon">4</div><div class="t">Line sensor</div><div class="s">Each product triggers exactly one print</div></div>
+      <div class="node"><div class="icon">5</div><div class="t">Product</div><div class="s">Receives the next serial in the list</div></div>
+      <div class="node"><div class="icon">6</div><div class="t">Print log</div><div class="s">Records serial, date and time</div></div>
+    </div>
+    <p>When the last serial is printed, Serialine stops the printer automatically.</p>
+  </div>
+</section>
+
+<!-- ============ 03 WHAT YOU NEED ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">03</div><div><div class="kicker">Requirements</div><h2>What you need</h2></div></div>
+  <p class="lead">Your UMS technician sets up and tests all of this at installation.</p>
+  <table>
+    <thead><tr><th style="width:28%">Item</th><th>Requirement</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Computer</strong></td><td>Windows 10 or 11 laptop or PC, on the same network as the printer</td></tr>
+      <tr><td><strong>Printer</strong></td><td>Leibinger JET2neo, configured by UMS for Serialine</td></tr>
+      <tr><td><strong>Line sensor</strong></td><td>Photo-eye connected to the printer's print trigger input</td></tr>
+      <tr><td><strong>Network</strong></td><td>Ethernet connection between the computer and the printer</td></tr>
+      <tr><td><strong>Serialine folder</strong></td><td><code>Serialine.exe</code> and <code>printer_settings.txt</code>, installed by UMS</td></tr>
+      <tr><td><strong>Serial file</strong></td><td>Excel (<code>.xlsx</code>) or CSV (<code>.csv</code>) file – see chapter 04</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn"><div class="label">Important</div><p>Keep the computer plugged in and set to <strong>never sleep</strong> while plugged in. A computer that goes to sleep stops the batch.</p></div>
+
+  <!-- 04 -->
+  <div class="chapter flow">
+    <div class="chapter-head"><div class="num">04</div><div><div class="kicker">Data</div><h2>Preparing your serial file</h2></div></div>
+    <p class="lead">One file = one batch. Save it in the Serialine folder with a name that identifies the batch, e.g. <code>Batch2026-041.xlsx</code>.</p>
+    <div style="display:grid; grid-template-columns: 1.35fr 1fr; gap: 8mm; align-items:start">
+      <ol class="steps">
+        <li>Serials in <strong>column A</strong> of the <strong>first sheet</strong>, starting in cell <strong>A1</strong>.</li>
+        <li><strong>No heading row.</strong> Anything in A1 is printed as the first serial.</li>
+        <li>One serial per row, printed top to bottom. Empty rows are skipped.</li>
+        <li>Every serial must be <strong>unique</strong>. Serialine refuses a file that contains a serial twice.</li>
+        <li>Serials must fit the print field on your printer – ask UMS for the maximum length.</li>
+      </ol>
+      <div>
+        <h3 style="margin-top:0">Example – first sheet</h3>
+        <table>
+          <thead><tr><th style="width:18%"></th><th>A</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><code>AV2026000001</code></td></tr>
+            <tr><td>2</td><td><code>AV2026000002</code></td></tr>
+            <tr><td>3</td><td><code>AV2026000003</code></td></tr>
+            <tr><td>4</td><td><code>AV2026000004</code></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:8.6pt;color:#5B6675">Leading zeros are kept: <code>000123</code> prints as <code>000123</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 PRINTING ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">05</div><div><div class="kicker">Daily procedure</div><h2>Printing a batch</h2></div></div>
+  <p class="lead">Starting a batch takes under a minute.</p>
+  <h3>Before you start</h3>
+  <ul class="check">
+    <li>Printer on, correct job loaded, jet running</li>
+    <li>Printer printing <strong>stopped</strong> ("Ready for print start")</li>
+    <li>Serial file saved in the Serialine folder</li>
+  </ul>
+  <h3>Start the batch</h3>
+  <ol class="steps">
+    <li>Double-click <strong>Serialine</strong> (<code>Serialine.exe</code>) in the Serialine folder.</li>
+    <li>Serialine lists the files in the folder. Type the <strong>number</strong> of your batch file and press <strong>ENTER</strong>.</li>
+    <li>Check the line <code>Printing records 1..N</code>. <strong>N must match the number of serials in your batch.</strong></li>
+    <li>Serialine loads the first serials into the printer and shows <code>Press ENTER to start printing</code>. Press <strong>ENTER</strong>.</li>
+    <li>Run the line. Each product gets the next serial; the screen shows <code>[PRINTED]</code> with the serial.</li>
+    <li>After the last serial the printer stops automatically and the screen shows <code>[SUCCESS]</code>. Press <strong>ENTER</strong> to close.</li>
+  </ol>
+  <div class="screen"><div class="bar"><i></i><i></i><i></i><span>Serialine</span></div><pre><span class="hl">UMS Serialine - unique serial printing</span>
+
+Data files in this folder:
+  1. Batch2026-041.xlsx
+  T. Test printer connection
+
+Type the number of the file to print (or T): <span class="hl">1</span>
+Found 5000 records. Printing records 1..5000 (5000).
+  255 serial(s) queued in the printer (records 1..255).
+  Press ENTER to start printing...
+  <span class="ok">[PRINTED]</span> 1/5000: AV2026000001
+  <span class="ok">[PRINTED]</span> 2/5000: AV2026000002
+<span class="ok">[SUCCESS]</span> Records 1..5000 printed - printing stopped.</pre></div>
+  <div class="callout"><div class="label">During printing</div><p>Leave the Serialine window open and the computer on. Do not change the job on the printer while a batch is running.</p></div>
+</section>
+
+<!-- ============ 06 STOPS ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">06</div><div><div class="kicker">When things change</div><h2>Stops, restarts and reprints</h2></div></div>
+  <p class="lead">Serialine always continues from the first unprinted serial. No serial is skipped or printed twice.</p>
+  <h3>The printer stops during a batch</h3>
+  <p>An error, or someone presses Stop.</p>
+  <ol class="steps">
+    <li>The screen shows <code>[STOPPED] Printing stopped after record X</code>.</li>
+    <li>Fix the cause and acknowledge any message on the printer.</li>
+    <li>Check the last product: it should carry serial number X in your list.</li>
+    <li>When Serialine shows <code>Press ENTER to start printing</code>, press <strong>ENTER</strong>. Printing continues from serial X+1.</li>
+  </ol>
+  <h3>Serialine was closed, or the computer restarted</h3>
+  <ol class="steps">
+    <li>Stop printing on the printer.</li>
+    <li>Start Serialine and choose the <strong>same file</strong>.</li>
+    <li>Serialine reads the print log and continues from the first unprinted serial.</li>
+  </ol>
+  <h3>Printing a completed batch again</h3>
+  <div class="callout warn"><div class="label">First</div><p><strong>Remove the products from the first print</strong> that carry these serials, so no serial exists twice.</p></div>
+  <ol class="steps">
+    <li>Start Serialine and choose the same file.</li>
+    <li>At <code>Print it again? (y/N)</code> type <strong>y</strong> and press ENTER.</li>
+    <li>Type <strong>YES</strong> in capitals and press ENTER to confirm. The original log is kept and a new log is started.</li>
+  </ol>
+  <div class="callout"><div class="label">Good to know</div><p>A product that reaches the sensor right after the last serial, before the printer has stopped, receives a blank print. Remove it from the line.</p></div>
+</section>
+
+<!-- ============ 07 LOG ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">07</div><div><div class="kicker">Traceability</div><h2>Your print log</h2></div></div>
+  <p class="lead">For every batch, Serialine writes a log in the Serialine folder named after the batch file: <code>Batch2026-041.xlsx</code> → <code>Batch2026-041_log.csv</code>. It opens in Excel.</p>
+  <table>
+    <thead><tr><th>timestamp</th><th>record</th><th>serial</th></tr></thead>
+    <tbody>
+      <tr><td><code>2026-10-06T08:14:02</code></td><td>1</td><td><code>AV2026000001</code></td></tr>
+      <tr><td><code>2026-10-06T08:14:03</code></td><td>2</td><td><code>AV2026000002</code></td></tr>
+      <tr><td><code>2026-10-06T08:14:03</code></td><td>3</td><td><code>AV2026000003</code></td></tr>
+    </tbody>
+  </table>
+  <ul class="bullets">
+    <li><strong>Keep every log</strong> with the batch records. Serialine also uses it to continue after a stop.</li>
+    <li><strong>Do not edit, rename or delete a log</strong> while its batch is not finished.</li>
+    <li>After a reprint, the earlier log is kept as <code>&lt;batch&gt;_log_before_reprint_&lt;date&gt;_&lt;time&gt;.csv</code>.</li>
+    <li>Back up the Serialine folder regularly, for example to a network drive.</li>
+  </ul>
+
+  <!-- 08 -->
+  <div class="chapter flow">
+    <div class="chapter-head"><div class="num">08</div><div><div class="kicker">Help</div><h2>Troubleshooting</h2></div></div>
+    <p class="lead">Most messages are solved on the printer screen. If a problem remains, contact UMS support with a photo of the Serialine window.</p>
+    <table>
+      <thead><tr><th style="width:36%">Message or symptom</th><th style="width:28%">What it means</th><th>What to do</th></tr></thead>
+      <tbody>
+        <tr><td><code>Printer is PRINTING - stop printing</code></td><td>Printing was already running</td><td>Stop printing on the printer. Serialine continues by itself</td></tr>
+        <tr><td><code>Printer reports error/message NNNN</code></td><td>A message is waiting on the printer</td><td>Read and acknowledge it on the printer screen</td></tr>
+        <tr><td><code>Printer state: ... - start the jet</code></td><td>The jet is not ready</td><td>Start the jet and wait until the printer is ready</td></tr>
+        <tr><td><code>[STOPPED] ... after record X</code></td><td>Printing stopped partway</td><td>See chapter 06</td></tr>
+        <tr><td><code>cannot connect</code> or <code>No reply</code></td><td>Computer cannot reach the printer</td><td>Check the network cable and that the printer is on. Then contact UMS</td></tr>
+        <tr><td><code>Dataset contains duplicate serials</code></td><td>A serial appears twice in the file</td><td>Correct the file, then start again</td></tr>
+        <tr><td><code>Serial ... contains a TAB or line break</code></td><td>A cell has hidden characters</td><td>Retype that serial in the file</td></tr>
+        <tr><td><code>... does not match the data file</code></td><td>The file changed after printing started, or a log from another batch has this name</td><td>Contact UMS before printing</td></tr>
+        <tr><td><code>Nothing left to print</code></td><td>The batch is already complete</td><td>Nothing to do. To print it again, see chapter 06</td></tr>
+        <tr><td>First product shows a heading</td><td>Heading in cell A1</td><td>Delete row 1 so A1 holds the first serial</td></tr>
+        <tr><td>Serial cut off on the product</td><td>Serial longer than the print field</td><td>Contact UMS to adjust the print field</td></tr>
+        <tr><td><code>Serialine.exe</code> missing or blocked</td><td>Antivirus quarantined it</td><td>Ask your IT department to allow <code>Serialine.exe</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 09 SUPPORT ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">09</div><div><div class="kicker">We're here to help</div><h2>Support</h2></div></div>
+  <p class="lead">UMS installs, tests and supports Serialine on your line. When you call, have the batch file name and a photo of the Serialine window ready.</p>
+  <table class="form">
+    <tbody>
+      <tr><td>Support phone</td><td></td></tr>
+      <tr><td>Support email</td><td></td></tr>
+      <tr><td>Your UMS technician</td><td></td></tr>
+      <tr><td>Installed on (date)</td><td></td></tr>
+      <tr><td>Printer serial number</td><td></td></tr>
+      <tr><td>Printer IP address</td><td></td></tr>
+    </tbody>
+  </table>
+  <div class="back" style="height:auto; margin-top:22mm; break-before:auto">
+    <div class="card">
+      <div><img src="assets/company-logo.svg" alt="Marking Solutions"><div class="small">UMS Serialine is a product of Marking Solutions. Leibinger and JET2neo are trademarks of their respective owners.</div></div>
+      <img src="assets/serialine-mark.svg" alt="" style="height:14mm">
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

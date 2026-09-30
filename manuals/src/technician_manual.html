@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>UMS Serialine – Technician Installation Manual</title>
+<link rel="stylesheet" href="brand.css">
+<link rel="stylesheet" href="manual.css">
+<style>
+  @page {
+    @top-left { content: "UMS Serialine  ·  Technician Installation Manual"; font: 600 7.5pt "Inter", Arial, sans-serif; color: #5B6675; vertical-align: bottom; padding-bottom: 4mm; }
+    @bottom-left { content: "Marking Solutions  ·  Internal – technicians"; font: 600 7.5pt "Inter", Arial, sans-serif; color: #5B6675; }
+    @bottom-right { content: "Version 1.0  ·  October 2026"; font: 500 7.5pt "Inter", Arial, sans-serif; color: #5B6675; }
+  }
+  .cover .doc-type { background: #fff; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="dots"></div>
+  <div class="inner">
+    <div class="product"><img src="assets/serialine-mark.svg" alt=""><span class="ums">UMS</span></div>
+    <h1>Serialine<span class="dot">.</span></h1>
+    <div class="tagline">Installation, commissioning and support – everything a technician needs on site.</div>
+    <div class="doc-type">Technician Installation Manual</div>
+    <div class="serial-strip">JET2neo <span>›</span> JET3 <span>›</span> PORT 3000</div>
+  </div>
+  <div class="band"></div>
+  <div class="foot">
+    <img src="assets/company-logo.svg" alt="Marking Solutions">
+    <div class="meta"><b>For Leibinger JET2neo printers</b><br>Internal – UMS technicians<br>Version 1.0 · October 2026</div>
+  </div>
+</section>
+
+<!-- ============ CONTENTS ============ -->
+<section class="contents">
+  <div class="chapter-head"><div><div class="kicker">Technician Manual</div><h2>Contents</h2></div></div>
+  <ol class="toc">
+    <li><span class="n">01</span>Installation at a glance<span class="d">Stages and timing</span></li>
+    <li><span class="n">02</span>Kit list<span class="d">What to bring</span></li>
+    <li><span class="n">03</span>Before the visit<span class="d">Client info and package build</span></li>
+    <li><span class="n">04</span>Printer configuration<span class="d">Interface settings</span></li>
+    <li><span class="n">05</span>Print job setup<span class="d">Mailing field and trigger</span></li>
+    <li><span class="n">06</span>Client PC setup<span class="d">Network, power, connection test</span></li>
+    <li><span class="n">07</span>Commissioning and sign-off<span class="d">Tests A–D</span></li>
+    <li><span class="n">08</span>Handover and training<span class="d">Operator checklist</span></li>
+    <li><span class="n">09</span>Technical troubleshooting<span class="d">Symptoms and fixes</span></li>
+    <li><span class="n">10</span>Command line and fallback<span class="d">Reference</span></li>
+    <li><span class="n">11</span>How Serialine talks to the printer<span class="d">Protocol notes</span></li>
+  </ol>
+  <div class="intro-box">
+    <h3>Golden rules on site</h3>
+    <ul class="bullets">
+      <li>Work through the stages in order. Each ends with a check that must pass before the next.</li>
+      <li>Never run a client's real serial file until Test A (chapter 07) has passed.</li>
+      <li>Leave the client with the printed <strong>User Manual</strong>, its support page filled in.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 01 + 02 ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">01</div><div><div class="kicker">Overview</div><h2>Installation at a glance</h2></div></div>
+  <p class="lead">A standard Serialine installation takes about <strong>2 hours on site</strong>, plus 30 minutes of preparation before the visit.</p>
+  <div class="stages">
+    <div class="stage"><div class="n">1</div><div class="t">Build package, collect client info</div><div class="m">UMS office · 30 min<br>Chapter 03</div></div>
+    <div class="stage"><div class="n">2</div><div class="t">Configure printer interface</div><div class="m">Printer · 15 min<br>Chapter 04</div></div>
+    <div class="stage"><div class="n">3</div><div class="t">Set up the print job</div><div class="m">Printer · 20 min<br>Chapter 05</div></div>
+    <div class="stage"><div class="n">4</div><div class="t">Install on client PC and test</div><div class="m">Client PC · 20 min<br>Chapter 06</div></div>
+    <div class="stage"><div class="n">5</div><div class="t">Product and line-speed tests</div><div class="m">Line · 30 min<br>Chapter 07</div></div>
+    <div class="stage"><div class="n">6</div><div class="t">Operator training and handover</div><div class="m">Line · 30 min<br>Chapter 08</div></div>
+  </div>
+
+  <div class="chapter flow">
+    <div class="chapter-head"><div class="num">02</div><div><div class="kicker">Preparation</div><h2>Kit list</h2></div></div>
+    <p class="lead">Pack this before leaving for site.</p>
+    <ul class="check">
+      <li>USB stick with the <code>Serialine_Package</code> folder (<code>Serialine.exe</code>, <code>printer_settings.txt</code>)</li>
+      <li>USB stick copy of <code>serialine.py</code> and <code>requirements.txt</code> (fallback if the .exe is blocked)</li>
+      <li>Test file <code>Test5.csv</code> with 5 serials (<code>TEST0001</code> to <code>TEST0005</code>)</li>
+      <li>Line-speed test file with 50 serials</li>
+      <li>Ethernet cable, 3 m or longer</li>
+      <li>Printer service/admin password</li>
+      <li>Printed <strong>UMS Serialine – User Manual</strong> for the client</li>
+      <li>This manual, with the commissioning sheet (chapter 07)</li>
+      <li>Test products (at least 60) agreed with the client</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 03 ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">03</div><div><div class="kicker">Preparation</div><h2>Before the visit</h2></div></div>
+  <h3 style="margin-top:0">Collect from the client</h3>
+  <table class="form">
+    <tbody>
+      <tr><td>Client / site</td><td></td></tr>
+      <tr><td>Printer model and serial number</td><td></td></tr>
+      <tr><td>Printer firmware version</td><td></td></tr>
+      <tr><td>Printer IP address on the client network</td><td></td></tr>
+      <tr><td>Client PC (laptop/PC, Windows version)</td><td></td></tr>
+      <tr><td>Network: shared network, or direct cable?</td><td></td></tr>
+      <tr><td>Serial format and maximum length (example)</td><td></td></tr>
+      <tr><td>Batch size (serials per file)</td><td></td></tr>
+      <tr><td>Line speed (products per minute)</td><td></td></tr>
+      <tr><td>Client contact and IT contact</td><td></td></tr>
+    </tbody>
+  </table>
+  <h3>Build the Serialine package</h3>
+  <p>On a UMS PC with Python installed:</p>
+  <ol class="steps">
+    <li>Put <code>serialine.py</code>, <code>printer_settings.txt</code> and <code>build_exe.bat</code> in one folder.</li>
+    <li>Double-click <code>build_exe.bat</code> and wait until it shows <strong>Done</strong> (1–3 minutes).</li>
+    <li>Check the new folder <code>Serialine_Package</code> contains <code>Serialine.exe</code> and <code>printer_settings.txt</code>.</li>
+    <li>Edit <code>printer_settings.txt</code> with the client's printer IP, then copy <code>Serialine_Package</code> to the USB stick.</li>
+  </ol>
+  <div class="screen"><div class="bar"><i></i><i></i><i></i><span>printer_settings.txt</span></div><pre>ip=<span class="hl">192.168.1.100</span>
+port=3000</pre></div>
+</section>
+
+<!-- ============ 04 + 05 ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">04</div><div><div class="kicker">Printer</div><h2>Printer configuration</h2></div></div>
+  <p class="lead">Serialine talks to the printer through the Leibinger interface protocol. The printer silently ignores anything else, so every setting below must match. Log in at service/admin level first.</p>
+  <table>
+    <thead><tr><th style="width:7%">✓</th><th style="width:38%">Menu</th><th style="width:20%">Setting</th><th>Required value</th></tr></thead>
+    <tbody>
+      <tr><td>☐</td><td>Settings / Basic settings / IP address</td><td>IP and subnet</td><td>Client network address, e.g. <code>192.168.1.100</code> / <code>255.255.255.0</code></td></tr>
+      <tr><td>☐</td><td>Extra / Interface settings / Communication interface</td><td>Interface</td><td><strong>Ethernet</strong></td></tr>
+      <tr><td>☐</td><td>Extra / Interface settings / Communication interface</td><td>Protocol</td><td><strong>JET3</strong></td></tr>
+      <tr><td>☐</td><td>Extra / Interface settings / Communication interface</td><td>Port</td><td><strong>3000</strong></td></tr>
+      <tr><td>☐</td><td>Extra / Database setting</td><td>Activate database</td><td><strong>OFF</strong></td></tr>
+    </tbody>
+  </table>
+  <p style="color:#5B6675;font-size:8.6pt">Restart the printer if it asks. Tested on JET2neo firmware V75.0.11.2, interface protocol V1.9.9.</p>
+
+  <div class="chapter">
+    <div class="chapter-head"><div class="num">05</div><div><div class="kicker">Printer</div><h2>Print job setup</h2></div></div>
+    <p class="lead">The job needs one text field that takes its text from the mailing queue. Without it, the printer accepts the serials but prints nothing from them.</p>
+    <ol class="steps">
+      <li>Stop printing and open the client's job in the job editor (or create a new job).</li>
+      <li>Add or select the text object for the serial.</li>
+      <li>Set its text source to <strong>Extern Text</strong> in <strong>mailing mode</strong> (may be called Mailing, Database or Mail field), <strong>field number 1</strong>.</li>
+      <li>Set the <strong>length</strong> to at least the longest serial. Recorded length: ________</li>
+      <li>Set font, position and orientation as the client requires. Other fixed text, dates or logos in the job are fine.</li>
+      <li>Job parameters: <strong>PrintGo source = External</strong> (photo-eye), edge as wired; PrintGo repetition = 0.</li>
+      <li>Set the print delay so the serial lands in the right place on the product.</li>
+      <li><strong>Save the job, then load it again.</strong></li>
+    </ol>
+    <div class="callout"><div class="label">Check</div><p>The connection test (chapter 06) must show a line like <code>*EXTTXT [ 12 (X) 1 0 0 0 0 0]</code>. The <strong>third value must be 1</strong> (mailing field 1); the first value is the length. A <code>0</code> in third place means Extern Text mode – fix step 3.</p></div>
+  </div>
+</section>
+
+<!-- ============ 06 ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">06</div><div><div class="kicker">Client PC</div><h2>Client PC setup</h2></div></div>
+  <ol class="steps">
+    <li><strong>Copy.</strong> Copy <code>Serialine_Package</code> to the client PC, e.g. <code>C:\Serialine</code> or the Desktop, and rename the folder to <code>Serialine</code>.</li>
+    <li><strong>Network.</strong> Connect the PC to the printer's network. In Command Prompt run <code>ping &lt;printer IP&gt;</code>. Replies = OK.</li>
+    <li><strong>No replies?</strong>
+      <ul>
+        <li>Direct cable: Settings → Network &amp; internet → Ethernet → IP assignment → Edit → Manual → IPv4. Use an address in the printer's range, e.g. <code>192.168.1.50</code>, subnet <code>255.255.255.0</code>, no gateway.</li>
+        <li>Client network: ask client IT for the printer's reachable IP and put it in <code>printer_settings.txt</code>.</li>
+      </ul></li>
+    <li><strong>Power.</strong> Settings → System → Power → Screen and sleep: sleep when plugged in = <strong>Never</strong>.</li>
+    <li><strong>Antivirus / SmartScreen.</strong> <code>Serialine.exe</code> is not code-signed. On "Windows protected your PC" click More info → Run anyway. If antivirus quarantines it, ask client IT to allow it, or use the fallback (chapter 10).</li>
+    <li><strong>Connection test.</strong> Double-click <code>Serialine.exe</code>, type <strong>T</strong>, press ENTER. All six pass criteria below must show.</li>
+    <li><strong>Shortcut.</strong> Right-click <code>Serialine.exe</code> → Show more options → Send to → Desktop (create shortcut). Rename it "Serialine".</li>
+  </ol>
+  <div class="screen"><div class="bar"><i></i><i></i><i></i><span>Serialine – connection test (pass)</span></div><pre>--- 192.168.1.100:3000 ---
+  Version       : [... 'V75.0.11.2', <span class="ok">'JET2neo'</span>, ...]       <span class="dim">&lt;- 1 printer found</span>
+  Machine state : Ready for print start, <span class="ok">error 0</span>     <span class="dim">&lt;- 2 no error</span>
+  Mailing FIFO  : <span class="ok">depth 256</span>, entries 0, last printed 0  <span class="dim">&lt;- 3 mailing available</span>
+  Loaded job    : \\FFSDISK\\JOBS\\CLIENT_JOB.job          <span class="dim">&lt;- 4 correct job</span>
+  Extern-text fields in the job:
+    *EXTTXT [ 12 (X) <span class="hl">1</span> 0 0 0 0 0]                     <span class="dim">&lt;- 5 third value = 1</span>
+
+  <span class="ok">OK - this port works. Use --port 3000</span>                <span class="dim">&lt;- 6</span></pre></div>
+</section>
+
+<!-- ============ 07 ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">07</div><div><div class="kicker">Commissioning</div><h2>Commissioning and sign-off</h2></div></div>
+  <p class="lead">Commissioning passes when every box is ticked. Keep the signed page with the job card.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:7mm">
+    <div>
+      <h3 style="margin-top:0">Test A – 5 products</h3>
+      <p style="font-size:8.6pt;color:#5B6675">File <code>Test5.csv</code>; printer ready, printing stopped.</p>
+      <ul class="check">
+        <li>Shows <code>5 serial(s) queued ... (records 1..5)</code></li>
+        <li>Products 1–5 get <code>TEST0001</code>–<code>TEST0005</code> in order</li>
+        <li><code>[SUCCESS]</code> and the printer stops by itself</li>
+        <li>A 6th product after the stop gets <strong>no</strong> print</li>
+        <li><code>Test5_log.csv</code> lists the 5 serials</li>
+        <li>Print position, size and legibility approved</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="margin-top:0">Test B – line speed</h3>
+      <p style="font-size:8.6pt;color:#5B6675">50-serial file at normal production speed.</p>
+      <ul class="check">
+        <li>All 50 printed in order, no gaps, no duplicates</li>
+        <li>No printer errors during the run</li>
+        <li>Products per minute: ________</li>
+      </ul>
+      <h3>Test C – stop and resume</h3>
+      <ul class="check">
+        <li>Stop mid-batch shows <code>[STOPPED] ... record X</code></li>
+        <li>After ENTER, printing resumes at X+1</li>
+      </ul>
+      <h3>Test D – reprint</h3>
+      <ul class="check">
+        <li>Finished file offers reprint; <code>YES</code> reprints; old log kept</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout warn"><div class="label">After sign-off</div><p>Delete the test files and test logs from the Serialine folder.</p></div>
+  <div class="signoff">
+    <div class="box"><div class="h">UMS technician</div><div class="line">Name</div><div class="line">Signature</div><div class="line">Date</div></div>
+    <div class="box"><div class="h">Client representative</div><div class="line">Name</div><div class="line">Signature</div><div class="line">Date</div></div>
+  </div>
+</section>
+
+<!-- ============ 08 ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">08</div><div><div class="kicker">Handover</div><h2>Handover and operator training</h2></div></div>
+  <p class="lead">Train every operator who will run batches, and let each one run a test batch themselves.</p>
+  <ul class="check">
+    <li>Fill in the Support page of the <strong>User Manual</strong> (phone, email, technician, install date, printer serial, printer IP) and hand it over</li>
+    <li>Show how to prepare a serial file: column A, from A1, no heading, unique serials</li>
+    <li>Operator starts a batch alone: printer ready → double-click Serialine → choose file → check N → ENTER</li>
+    <li>Show a stop and resume</li>
+    <li>Show where the logs are and explain they must be kept</li>
+    <li>Explain reprints: remove the first-run products first, then <code>y</code> and <code>YES</code></li>
+    <li>Explain the blank product that can occur at the end of a batch</li>
+    <li>Agree who backs up the Serialine folder, and where</li>
+  </ul>
+  <table class="form" style="margin-top:6mm"><tbody><tr><td>Operators trained</td><td></td></tr><tr><td></td><td></td></tr></tbody></table>
+</section>
+
+<!-- ============ 09 ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">09</div><div><div class="kicker">Support</div><h2>Technical troubleshooting</h2></div></div>
+  <p class="lead">Start every diagnosis with the connection test: <code>Serialine.exe</code>, then <strong>T</strong>.</p>
+  <table>
+    <thead><tr><th style="width:31%">Symptom</th><th style="width:31%">Cause</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Port 3000: <code>actively refused it</code></td><td>Interface not listening on 3000</td><td>Interface = Ethernet, port 3000; restart printer</td></tr>
+      <tr><td><code>timed out</code> / ping fails</td><td>PC not on the printer's network</td><td>Fix IP/subnet or cable (chapter 06, step 3)</td></tr>
+      <tr><td>Connects, <code>No reply to ?VS</code></td><td>Protocol not JET3, or wrong device</td><td>Protocol = JET3; check the IP is the printer</td></tr>
+      <tr><td><code>EXTTXT [ .. (X) 0 ...]</code></td><td>Field in Extern Text mode</td><td>Mailing mode, field 1; save and reload job</td></tr>
+      <tr><td>No <code>EXTTXT</code> line</td><td>Job has no external text field</td><td>Add the mailing field (chapter 05)</td></tr>
+      <tr><td><code>did not accept the serials into its mailing queue</code></td><td>Database active, no mailing field, or job not reloaded</td><td>Activate database OFF; check field; reload job</td></tr>
+      <tr><td>Error 5043 after the last serial</td><td>Mailing queue ran empty (old version)</td><td>Use the current <code>Serialine.exe</code></td></tr>
+      <tr><td><code>stopped after record 0</code> right after ENTER</td><td>Printer stopped before the first product</td><td>Check the printer screen; press ENTER to resume</td></tr>
+      <tr><td><code>error/message NNNN</code></td><td>Message pending on the printer</td><td>Acknowledge; look up NNNN in the printer's error list</td></tr>
+      <tr><td>Numbering error at batch start</td><td>Firmware expects a sequence starting at 0</td><td>Report to UMS development with firmware version</td></tr>
+      <tr><td>Every trigger prints, no new serial</td><td>Mailing field missing; fixed text printing</td><td>Check the EXTTXT line; reload the job</td></tr>
+      <tr><td>No print on a product</td><td>Sensor not triggering, or PrintGo internal</td><td>Check photo-eye LED; PrintGo source = External</td></tr>
+      <tr><td><code>does not match the data file</code></td><td>File edited after printing began, or log name reused</td><td>Keep the original file; use a new file name for a new batch</td></tr>
+      <tr><td>Blank product after the last serial</td><td>Product triggered before Serialine stopped the printer</td><td>Expected at high speed; remove it</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">10</div><div><div class="kicker">Reference</div><h2>Command line and fallback</h2></div></div>
+  <p class="lead">Open Command Prompt in the Serialine folder. Without <code>--file</code>, Serialine starts in operator mode (file list).</p>
+  <table>
+    <thead><tr><th style="width:34%">Task</th><th>Command</th></tr></thead>
+    <tbody>
+      <tr><td>Connection test</td><td><code>Serialine.exe --test-connection</code></td></tr>
+      <tr><td>Print a file (log = <code>&lt;file&gt;_log.csv</code>)</td><td><code>Serialine.exe --file Batch.xlsx</code></td></tr>
+      <tr><td>Print with a chosen log name</td><td><code>Serialine.exe --file Batch.xlsx --log Batch_A_log.csv</code></td></tr>
+      <tr><td>Reprint a whole batch</td><td><code>Serialine.exe --file Batch.xlsx --reprint</code></td></tr>
+      <tr><td>Reprint records 120–135 only</td><td><code>Serialine.exe --file Batch.xlsx --reprint --from 120 --to 135</code></td></tr>
+      <tr><td>Other printer IP or port, once</td><td>add <code>--ip 192.168.1.120 --port 3000</code></td></tr>
+      <tr><td>Start without pressing ENTER</td><td>add <code>--yes</code> (also skips the reprint confirmation – use with care)</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><div class="label">Fallback</div><p>If the .exe is blocked: install Python 3 from python.org for the current user (tick "Add python.exe to PATH"). Copy <code>serialine.py</code>, <code>requirements.txt</code> and <code>printer_settings.txt</code> into the Serialine folder and run <code>pip install -r requirements.txt</code> there. Double-click <code>serialine.py</code>, or use the commands above with <code>python serialine.py</code> in place of <code>Serialine.exe</code>.</p></div>
+
+  <div class="chapter">
+    <div class="chapter-head"><div class="num">11</div><div><div class="kicker">Under the hood</div><h2>How Serialine talks to the printer</h2></div></div>
+    <p class="lead">Serialine uses the printer's <strong>mailing mode</strong> (Leibinger Interface Protocol v1.9.15, Annex B). Every message is <code>^0</code> + command + carriage return, over TCP port 3000.</p>
+    <table>
+      <thead><tr><th style="width:26%">Command</th><th>Purpose in Serialine</th></tr></thead>
+      <tbody>
+        <tr><td><code>?VS</code></td><td>Firmware version (connection test)</td></tr>
+        <tr><td><code>?RS</code></td><td>Machine state (5 = ready, 6 = printing) and error number</td></tr>
+        <tr><td><code>?SM</code></td><td>Mailing queue: depth, entries, last printed record number</td></tr>
+        <tr><td><code>?JB</code> / <code>?JL</code></td><td>Loaded job script / name (checks the EXTTXT field)</td></tr>
+        <tr><td><code>!FF</code></td><td>Clear the mailing queue before loading a batch</td></tr>
+        <tr><td><code>=CM&lt;n&gt;</code></td><td>Stop after record n (ignored by JET2neo V75.0.11.2)</td></tr>
+        <tr><td><code>=MR&lt;n&gt;&lt;TAB&gt;&lt;serial&gt;</code></td><td>Queue serial as record n</td></tr>
+        <tr><td><code>!GO</code> / <code>!ST</code></td><td>Start / stop printing</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h3>Sequence per batch</h3>
+  <ol class="steps">
+    <li>Wait for state 5 (ready); clear the queue (<code>!FF</code>).</li>
+    <li>Send up to 255 records (<code>=MR</code>), numbered 1, 2, 3 … in file order.</li>
+    <li>Operator presses ENTER → <code>!GO</code>. Each PrintGo prints the next record; the printer rejects gaps and repeats.</li>
+    <li>Every 0.2 s Serialine reads <code>?SM</code>, logs newly printed records and tops up the queue in blocks of 50.</li>
+    <li>A blank end-marker record follows the last serial so the queue never runs empty (JET2neo error 5043). When the last serial is reported printed, Serialine sends <code>!ST</code>.</li>
+    <li>If printing stops early, the printer clears its queue; Serialine reloads from the first unprinted record.</li>
+  </ol>
+  <div class="back" style="height:auto; margin-top:14mm; break-before:auto">
+    <div class="card">
+      <div><img src="assets/company-logo.svg" alt="Marking Solutions"><div class="small">UMS Serialine is a product of Marking Solutions. Leibinger and JET2neo are trademarks of their respective owners. Internal document – not for distribution to clients.</div></div>
+      <img src="assets/serialine-mark.svg" alt="" style="height:14mm">
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

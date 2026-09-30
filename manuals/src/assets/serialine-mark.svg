@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- UMS Serialine product mark: a dot-matrix 'S' as printed by an inkjet coder -->
+  <rect width="64" height="64" rx="14" fill="#F5A623"/>
+  <g fill="#0B1F33">
+    <circle cx="24" cy="14" r="3.6"/><circle cx="32" cy="14" r="3.6"/><circle cx="40" cy="14" r="3.6"/><circle cx="48" cy="18" r="3.6"/>
+    <circle cx="16" cy="22" r="3.6"/>
+    <circle cx="16" cy="30" r="3.6"/>
+    <circle cx="24" cy="34" r="3.6"/><circle cx="32" cy="34" r="3.6"/><circle cx="40" cy="34" r="3.6"/>
+    <circle cx="48" cy="42" r="3.6"/>
+    <circle cx="48" cy="50" r="3.6"/>
+    <circle cx="16" cy="54" r="3.6"/><circle cx="24" cy="54" r="3.6"/><circle cx="32" cy="54" r="3.6"/><circle cx="40" cy="54" r="3.6"/>
+  </g>
+</svg>
