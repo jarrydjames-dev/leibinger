@@ -1,5 +1,5 @@
 """
-Leibinger JET2neo - sensor-triggered unique serial printing (Avis Labs)
+UMS Serialine - sensor-triggered unique serial printing for Leibinger JET2neo
 
 Uses the printer's MAILING mode (Leibinger Interface Protocol v1.9.15, Annex B):
 
@@ -22,11 +22,11 @@ Printer setup:
 Usage
 -----
     Double-click the .exe (or run without --file): operator mode - pick the file from a list
-    python leibinger_serial_printer.py --test-connection   # check comms + job
-    python leibinger_serial_printer.py --file Data.xlsx    # log: Data_log.csv
-    python leibinger_serial_printer.py --file Data.xlsx --ip 192.168.1.100
-    python leibinger_serial_printer.py --file Data.xlsx --log B1_log.csv --reprint              # whole batch again
-    python leibinger_serial_printer.py --file Data.xlsx --log B1_log.csv --reprint --from 3 --to 4  # records 3-4 again
+    python serialine.py --test-connection   # check comms + job
+    python serialine.py --file Data.xlsx    # log: Data_log.csv
+    python serialine.py --file Data.xlsx --ip 192.168.1.100
+    python serialine.py --file Data.xlsx --log B1_log.csv --reprint              # whole batch again
+    python serialine.py --file Data.xlsx --log B1_log.csv --reprint --from 3 --to 4  # records 3-4 again
 """
 
 import argparse
@@ -284,7 +284,7 @@ def archive_log_for_reprint(args, first, total, serials):
 
 
 def run(args):
-    print("Leibinger JET2neo - Sensor-Triggered Serial Printing (mailing mode)\n")
+    print("UMS Serialine - unique serial printing (Leibinger JET2neo)\n")
 
     print(f"Loading data from '{args.file}'...")
     serials = load_serials(args.file)
@@ -422,7 +422,7 @@ def choose_file_interactively(args):
     """Operator mode (program double-clicked): pick the data file from a list."""
     files = sorted(f for f in os.listdir(".")
                    if f.lower().endswith((".xlsx", ".xls", ".csv")) and "_log" not in f.lower())
-    print("Leibinger JET2neo - Avis serial printing\n")
+    print("UMS Serialine - unique serial printing\n")
     print(f"Printer: {args.ip}:{args.port}   (change in {SETTINGS_FILE})\n")
     print("Data files in this folder:")
     for i, f in enumerate(files, start=1):

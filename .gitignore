@@ -3,5 +3,5 @@ __pycache__/
 build/
 dist/
 *.spec
-AvisSerialPrinter_Laptop/
+Serialine_Package/
 *_log*.csv

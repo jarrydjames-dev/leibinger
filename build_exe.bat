@@ -1,16 +1,16 @@
 @echo off
-rem Builds AvisSerialPrinter.exe (no Python needed on the operator laptop).
-rem Run this on the PC that already has Python, in the folder with leibinger_serial_printer.py.
+rem Builds Serialine.exe (no Python needed on the client PC).
+rem Run this on the PC that already has Python, in the folder with serialine.py.
 
 py -m pip install --upgrade pyinstaller pandas openpyxl || goto :error
-py -m PyInstaller --onefile --console --name AvisSerialPrinter leibinger_serial_printer.py || goto :error
+py -m PyInstaller --onefile --console --name Serialine serialine.py || goto :error
 
-if not exist "AvisSerialPrinter_Laptop" mkdir "AvisSerialPrinter_Laptop"
-copy /Y "dist\AvisSerialPrinter.exe" "AvisSerialPrinter_Laptop\" >nul
-copy /Y "printer_settings.txt" "AvisSerialPrinter_Laptop\" >nul
+if not exist "Serialine_Package" mkdir "Serialine_Package"
+copy /Y "dist\Serialine.exe" "Serialine_Package\" >nul
+copy /Y "printer_settings.txt" "Serialine_Package\" >nul
 
 echo.
-echo Done. Copy the folder AvisSerialPrinter_Laptop to the operator laptop.
+echo Done. Copy the folder Serialine_Package to the client PC.
 pause
 exit /b 0
 
