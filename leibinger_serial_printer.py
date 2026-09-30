@@ -21,8 +21,9 @@ Printer setup:
 
 Usage
 -----
+    Double-click the .exe (or run without --file): operator mode - pick the file from a list
     python leibinger_serial_printer.py --test-connection   # check comms + job
-    python leibinger_serial_printer.py                     # print Data.csv
+    python leibinger_serial_printer.py --file Data.xlsx    # log: Data_log.csv
     python leibinger_serial_printer.py --file Data.xlsx --ip 192.168.1.100
     python leibinger_serial_printer.py --file Data.xlsx --log B1_log.csv --reprint              # whole batch again
     python leibinger_serial_printer.py --file Data.xlsx --log B1_log.csv --reprint --from 3 --to 4  # records 3-4 again
@@ -44,8 +45,7 @@ import pandas as pd
 # ==========================================
 PRINTER_IP = "192.168.1.100"   # Printer IP address
 PRINTER_PORT = 3000            # Leibinger interface port (manual default: 3000)
-INPUT_FILE = "Data.csv"        # .csv, .xlsx or .xls - serials in the first column
-PRINT_LOG = "print_log.csv"    # Every printed serial is appended here (audit + resume)
+SETTINGS_FILE = "printer_settings.txt"  # optional, next to the program: ip=... / port=...
 
 POLL_INTERVAL = 0.2            # Seconds between status polls
 REPLY_TIMEOUT = 2.0            # Seconds to wait for a reply to a query
@@ -302,8 +302,13 @@ def run(args):
     serials = serials[:total]          # records after --to are never sent
     print(f"  {logged - first + 1} already printed, {total - logged} to go.")
     if logged >= total:
-        print("[SUCCESS] Nothing left to print. To print this batch again, add --reprint")
-        return
+        if not (args.interactive and input("  This batch is already fully printed. "
+                                           "Print it again? (y/N): ").strip().lower() == "y"):
+            print("Nothing left to print." if args.interactive else
+                  "[SUCCESS] Nothing left to print. To print this batch again, add --reprint")
+            return
+        archive_log_for_reprint(args, first, total, serials)
+        logged = first - 1
 
     printer = LeibingerPrinter(args.ip, args.port)
     print(f"Connecting to JET2neo at {args.ip}:{args.port}...")
@@ -392,12 +397,56 @@ def test_connection(args):
             printer.close()
 
 
+def app_folder() -> str:
+    """Folder of the .exe (when built with PyInstaller) or of this script."""
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def load_settings():
+    """Optional printer_settings.txt next to the program, e.g.  ip=192.168.1.100  /  port=3000"""
+    settings = {"ip": PRINTER_IP, "port": PRINTER_PORT}
+    path = os.path.join(app_folder(), SETTINGS_FILE)
+    if os.path.exists(path):
+        with open(path) as f:
+            for line in f:
+                key, sep, value = line.partition("=")
+                if sep and key.strip().lower() in settings and value.strip():
+                    settings[key.strip().lower()] = value.strip()
+    settings["port"] = int(settings["port"])
+    return settings
+
+
+def choose_file_interactively(args):
+    """Operator mode (program double-clicked): pick the data file from a list."""
+    files = sorted(f for f in os.listdir(".")
+                   if f.lower().endswith((".xlsx", ".xls", ".csv")) and "_log" not in f.lower())
+    print("Leibinger JET2neo - Avis serial printing\n")
+    print(f"Printer: {args.ip}:{args.port}   (change in {SETTINGS_FILE})\n")
+    print("Data files in this folder:")
+    for i, f in enumerate(files, start=1):
+        print(f"  {i}. {f}")
+    print("  T. Test printer connection")
+    while True:
+        choice = input("\nType the number of the file to print (or T): ").strip()
+        if choice.lower() == "t":
+            args.test_connection = True
+            return
+        if choice.isdigit() and 1 <= int(choice) <= len(files):
+            args.file = files[int(choice) - 1]
+            print()
+            return
+        print("  Not a valid choice.")
+
+
 def main():
+    settings = load_settings()
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--file", default=INPUT_FILE)
-    parser.add_argument("--ip", default=PRINTER_IP)
-    parser.add_argument("--port", type=int, default=PRINTER_PORT)
-    parser.add_argument("--log", default=PRINT_LOG)
+    parser.add_argument("--file", help="Data file (.xlsx/.csv). Without it, the program asks (operator mode).")
+    parser.add_argument("--ip", default=settings["ip"])
+    parser.add_argument("--port", type=int, default=settings["port"])
+    parser.add_argument("--log", help="Print log (default: <data file name>_log.csv)")
     parser.add_argument("--yes", action="store_true", help="Start printing without pressing ENTER")
     parser.add_argument("--reprint", action="store_true",
                         help="Print the batch (or --from/--to range) again; the old log is kept as a copy")
@@ -406,14 +455,27 @@ def main():
     parser.add_argument("--test-connection", action="store_true",
                         help="Check communication, printer state and the loaded job")
     args = parser.parse_args()
+    args.interactive = args.file is None and not args.test_connection
 
+    exit_code = 0
     try:
+        if args.interactive:
+            os.chdir(app_folder())
+            choose_file_interactively(args)
+        if args.file and not args.log:
+            args.log = os.path.splitext(args.file)[0] + "_log.csv"
         test_connection(args) if args.test_connection else run(args)
     except KeyboardInterrupt:
         print("\n[STOPPED] by operator. Stop printing on the printer; re-run to resume from the log.")
     except (PrinterError, ValueError, OSError) as e:
         print(f"\n[ERROR] {e}")
-        sys.exit(1)
+        exit_code = 1
+    if args.interactive:
+        try:
+            input("\nPress ENTER to close this window...")
+        except (KeyboardInterrupt, EOFError):
+            pass
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

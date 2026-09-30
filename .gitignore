@@ -1,2 +1,7 @@
 print_log.csv
 __pycache__/
+build/
+dist/
+*.spec
+AvisSerialPrinter_Laptop/
+*_log*.csv
