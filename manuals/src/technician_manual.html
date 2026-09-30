@@ -7,11 +7,14 @@
 <link rel="stylesheet" href="manual.css">
 <style>
   @page {
-    @top-left { content: "UMS Serialine  ·  Technician Installation Manual"; font: 600 7.5pt "Inter", Arial, sans-serif; color: #5B6675; vertical-align: bottom; padding-bottom: 4mm; }
-    @bottom-left { content: "Marking Solutions  ·  Internal – technicians"; font: 600 7.5pt "Inter", Arial, sans-serif; color: #5B6675; }
-    @bottom-right { content: "Version 1.0  ·  October 2026"; font: 500 7.5pt "Inter", Arial, sans-serif; color: #5B6675; }
+    @top-left { content: "UMS Serialine  ·  Technician Installation Manual"; font: 600 7.5pt "Roboto", Arial, sans-serif; color: #5B6675; vertical-align: bottom; padding-bottom: 4mm; }
+    @bottom-left { content: "Marking Solutions  ·  Internal – technicians"; font: 600 7.5pt "Roboto", Arial, sans-serif; color: #5B6675; }
+    @bottom-right { content: "Version 1.0  ·  October 2026"; font: 500 7.5pt "Roboto", Arial, sans-serif; color: #5B6675; }
   }
-  .cover .doc-type { background: #fff; }
+  .cover .doc-type { background: #fff; color: var(--brand-ink); }
+  .back img { height: 12mm; }
+  .back .card { padding-top: 4mm; }
+  .back .small { max-width: 140mm; }
 </style>
 </head>
 <body>
@@ -20,7 +23,7 @@
 <section class="cover">
   <div class="dots"></div>
   <div class="inner">
-    <div class="product"><img src="assets/serialine-mark.svg" alt=""><span class="ums">UMS</span></div>
+    <div class="product"><img src="assets/serialine-mark.svg" alt=""><span class="ums">UMS<small>Utho Marking Solutions</small></span></div>
     <h1>Serialine<span class="dot">.</span></h1>
     <div class="tagline">Installation, commissioning and support – everything a technician needs on site.</div>
     <div class="doc-type">Technician Installation Manual</div>
@@ -28,7 +31,7 @@
   </div>
   <div class="band"></div>
   <div class="foot">
-    <img src="assets/company-logo.svg" alt="Marking Solutions">
+    <img src="assets/marking-solutions-logo.png" alt="Marking Solutions">
     <div class="meta"><b>For Leibinger JET2neo printers</b><br>Internal – UMS technicians<br>Version 1.0 · October 2026</div>
   </div>
 </section>
@@ -227,7 +230,7 @@ port=3000</pre></div>
   <div class="chapter-head"><div class="num">08</div><div><div class="kicker">Handover</div><h2>Handover and operator training</h2></div></div>
   <p class="lead">Train every operator who will run batches, and let each one run a test batch themselves.</p>
   <ul class="check">
-    <li>Fill in the Support page of the <strong>User Manual</strong> (phone, email, technician, install date, printer serial, printer IP) and hand it over</li>
+    <li>Fill in the Support page of the <strong>User Manual</strong> (technician, install date, printer serial, printer IP) and hand it over</li>
     <li>Show how to prepare a serial file: column A, from A1, no heading, unique serials</li>
     <li>Operator starts a batch alone: printer ready → double-click Serialine → choose file → check N → ENTER</li>
     <li>Show a stop and resume</li>
@@ -311,9 +314,9 @@ port=3000</pre></div>
     <li>A blank end-marker record follows the last serial so the queue never runs empty (JET2neo error 5043). When the last serial is reported printed, Serialine sends <code>!ST</code>.</li>
     <li>If printing stops early, the printer clears its queue; Serialine reloads from the first unprinted record.</li>
   </ol>
-  <div class="back" style="height:auto; margin-top:6mm; break-before:auto">
+  <div class="back" style="height:auto; margin-top:4mm; break-before:auto">
     <div class="card">
-      <div><img src="assets/company-logo.svg" alt="Marking Solutions"><div class="small">UMS Serialine is a product of Marking Solutions. Leibinger and JET2neo are trademarks of their respective owners. Internal document – not for distribution to clients.</div></div>
+      <div><img src="assets/marking-solutions-logo.png" alt="Marking Solutions"><div class="contact"><b>Marking Solutions</b><br>Unit 6, Barbeque Heights, 9 Dytchley Rd, Barbeque Downs, Midrand, 1684<br>Tel <b>+27 11 466 0030</b> &nbsp;·&nbsp; <b>Sales@markingsolutions.co.za</b> &nbsp;·&nbsp; www.markingsolutions.co.za</div><div class="small" style="margin-top:3mm">UMS Serialine is a product of Utho Marking Solutions (UMS). Leibinger and JET2neo are trademarks of their respective owners. Internal document – not for distribution to clients.</div></div>
       <img src="assets/serialine-mark.svg" alt="" style="height:14mm">
     </div>
   </div>

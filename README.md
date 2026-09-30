@@ -1,6 +1,6 @@
 # UMS Serialine
 
-Prints one unique serial per product from an Excel/CSV file on a Leibinger JET2neo.
+A Utho Marking Solutions (UMS) product. Prints one unique serial per product from an Excel/CSV file on a Leibinger JET2neo.
 The line's photo-eye triggers each print. Serials are queued in the printer's mailing
 buffer, so the printer never prints a serial twice. Every printed serial is logged.
 

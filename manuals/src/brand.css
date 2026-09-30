@@ -1,18 +1,19 @@
 /* =====================================================================
-   BRAND SETTINGS - Marking Solutions
-   Change the colours here and replace the logo files in assets/.
-   The company name in page headers is set in each manual's <style> block (@page).
-   then run build_manuals.sh (or .bat) to regenerate both PDFs.
+   BRAND SETTINGS - Marking Solutions (from the company profile)
+   Change colours here and replace the logo files in assets/, then run
+   build_manuals.bat (Windows) or build_manuals.sh to regenerate the PDFs.
+   The company name in page headers/footers is set in each manual's
+   <style> block (@page).
    ===================================================================== */
 :root {
-  --brand-ink:      #0B1F33;  /* dark: cover, headings, table headers   */
-  --brand-primary:  #0F5AA6;  /* main brand colour: rules, numbers, links */
-  --brand-accent:   #F5A623;  /* highlight: chapter numbers, warnings   */
-  --brand-tint:     #EAF2FB;  /* light background for notes and tables */
-  --brand-accent-tint: #FEF4E3;
-
+  --brand-ink:         #193043;  /* Marking Solutions navy: cover, headings, tables */
+  --brand-primary:     #193043;  /* step numbers, rules                             */
+  --brand-accent:      #EE5519;  /* Marking Solutions orange: chapter numbers, bands */
+  --brand-grey:        #8C9BA5;  /* logo grey                                        */
+  --brand-tint:        #EDF1F5;  /* light navy background for notes                  */
+  --brand-accent-tint: #FDEEE7;  /* light orange background for warnings            */
 }
 
-/* Logo files (SVG or PNG):
-   assets/company-logo.svg        - full-colour logo, used on white pages
-   assets/company-logo-white.svg  - white/reversed logo, used on the dark cover */
+/* Logo file:
+   assets/marking-solutions-logo.png  - transparent PNG, ~1400 px wide.
+   Used on the cover, back page and every page header (manual.css, @top-right). */
