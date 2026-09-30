@@ -307,11 +307,11 @@ port=3000</pre></div>
     <li>Wait for state 5 (ready); clear the queue (<code>!FF</code>).</li>
     <li>Send up to 255 records (<code>=MR</code>), numbered 1, 2, 3 … in file order.</li>
     <li>Operator presses ENTER → <code>!GO</code>. Each PrintGo prints the next record; the printer rejects gaps and repeats.</li>
-    <li>Every 0.2 s Serialine reads <code>?SM</code>, logs newly printed records and tops up the queue in blocks of 50.</li>
+    <li>Every 0.2 s Serialine reads <code>?SM</code>, logs newly printed records and tops up the queue in blocks of 50. The queue is a rolling buffer, so batch size is unlimited (tested with 12,000 serials in one run).</li>
     <li>A blank end-marker record follows the last serial so the queue never runs empty (JET2neo error 5043). When the last serial is reported printed, Serialine sends <code>!ST</code>.</li>
     <li>If printing stops early, the printer clears its queue; Serialine reloads from the first unprinted record.</li>
   </ol>
-  <div class="back" style="height:auto; margin-top:14mm; break-before:auto">
+  <div class="back" style="height:auto; margin-top:6mm; break-before:auto">
     <div class="card">
       <div><img src="assets/company-logo.svg" alt="Marking Solutions"><div class="small">UMS Serialine is a product of Marking Solutions. Leibinger and JET2neo are trademarks of their respective owners. Internal document – not for distribution to clients.</div></div>
       <img src="assets/serialine-mark.svg" alt="" style="height:14mm">

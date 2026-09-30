@@ -67,27 +67,29 @@
     <div class="feature"><div class="t">Full traceability</div><p>A print log records every serial with its date and time, ready for your batch records.</p></div>
     <div class="feature"><div class="t">Safe restarts</div><p>After a stop, a power cut or a closed window, Serialine continues from the first unprinted serial.</p></div>
     <div class="feature"><div class="t">Controlled reprints</div><p>A batch is printed again only after explicit confirmation, and the original log is kept.</p></div>
+    <div class="feature"><div class="t">Any batch size</div><p>Print 5,000, 50,000 or more unique serials in one continuous run – no splitting files.</p></div>
+    <div class="feature"><div class="t">Keeps up with your line</div><p>Serialine feeds the printer ahead of production, so the line never waits for data.</p></div>
   </div>
   <div class="callout"><div class="label">Simple</div><p>Double-click, choose the file, press ENTER. No installation and no technical knowledge needed – your UMS technician sets everything up.</p></div>
 
   <!-- 02 -->
-  <div class="chapter flow">
+  <div class="chapter">
     <div class="chapter-head"><div class="num">02</div><div><div class="kicker">Overview</div><h2>How it works</h2></div></div>
     <p class="lead">Serialine sends your serials to the printer; your line sensor decides when each one is printed.</p>
     <div class="flow-diagram">
       <div class="node"><div class="icon">1</div><div class="t">Serial file</div><div class="s">Your list of unique serials in Excel or CSV</div></div>
       <div class="node"><div class="icon">2</div><div class="t">Serialine</div><div class="s">Reads the file, sends serials over the network</div></div>
-      <div class="node"><div class="icon">3</div><div class="t">Printer queue</div><div class="s">Holds up to 255 serials ready to print</div></div>
+      <div class="node"><div class="icon">3</div><div class="t">Printer queue</div><div class="s">Always kept topped up with the next serials</div></div>
       <div class="node"><div class="icon">4</div><div class="t">Line sensor</div><div class="s">Each product triggers exactly one print</div></div>
       <div class="node"><div class="icon">5</div><div class="t">Product</div><div class="s">Receives the next serial in the list</div></div>
       <div class="node"><div class="icon">6</div><div class="t">Print log</div><div class="s">Records serial, date and time</div></div>
     </div>
-    <p>When the last serial is printed, Serialine stops the printer automatically.</p>
+    <p>The printer queue is a rolling buffer: it holds the next 255 serials, and Serialine refills it continuously as products are printed. <strong>A batch can contain any number of serials</strong> – 5,000, 50,000 or more – in one production run. When the last serial is printed, Serialine stops the printer automatically.</p>
   </div>
 </section>
 
 <!-- ============ 03 WHAT YOU NEED ============ -->
-<section class="chapter">
+<section class="chapter flow">
   <div class="chapter-head"><div class="num">03</div><div><div class="kicker">Requirements</div><h2>What you need</h2></div></div>
   <p class="lead">Your UMS technician sets up and tests all of this at installation.</p>
   <table>
@@ -104,14 +106,14 @@
   <div class="callout warn"><div class="label">Important</div><p>Keep the computer plugged in and set to <strong>never sleep</strong> while plugged in. A computer that goes to sleep stops the batch.</p></div>
 
   <!-- 04 -->
-  <div class="chapter flow">
+  <div class="chapter">
     <div class="chapter-head"><div class="num">04</div><div><div class="kicker">Data</div><h2>Preparing your serial file</h2></div></div>
     <p class="lead">One file = one batch. Save it in the Serialine folder with a name that identifies the batch, e.g. <code>Batch2026-041.xlsx</code>.</p>
     <div style="display:grid; grid-template-columns: 1.35fr 1fr; gap: 8mm; align-items:start">
       <ol class="steps">
         <li>Serials in <strong>column A</strong> of the <strong>first sheet</strong>, starting in cell <strong>A1</strong>.</li>
         <li><strong>No heading row.</strong> Anything in A1 is printed as the first serial.</li>
-        <li>One serial per row, printed top to bottom. Empty rows are skipped.</li>
+        <li>One serial per row, printed top to bottom. Empty rows are skipped. There is no limit on the number of rows.</li>
         <li>Every serial must be <strong>unique</strong>. Serialine refuses a file that contains a serial twice.</li>
         <li>Serials must fit the print field on your printer – ask UMS for the maximum length.</li>
       </ol>
