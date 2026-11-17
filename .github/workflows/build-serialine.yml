@@ -1,0 +1,74 @@
+# Builds Serialine.exe on a GitHub Windows machine - no Windows PC or Python needed.
+#
+# Runs automatically when the program or its settings change, or on demand:
+#   GitHub > Actions > "Build Serialine.exe" > Run workflow
+#
+# Download the result:
+#   * Latest release:  https://github.com/jarrydjames-dev/leibinger/releases/latest
+#                      (file: Serialine_Package.zip)
+#   * Or the run page: Actions > latest green run > Artifacts > Serialine_Package
+#
+# Serialine_Package contains Serialine.exe and printer_settings.txt -
+# copy the folder to a memory stick and onto the client laptop.
+
+name: Build Serialine.exe
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - serialine.py
+      - printer_settings.txt
+      - requirements.txt
+      - .github/workflows/build-serialine.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+
+      - name: Build Serialine.exe
+        run: python -m PyInstaller --onefile --console --name Serialine serialine.py
+
+      - name: Check the .exe starts
+        run: .\dist\Serialine.exe --help
+
+      - name: Make Serialine_Package folder
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force Serialine_Package | Out-Null
+          Copy-Item dist\Serialine.exe Serialine_Package\
+          Copy-Item printer_settings.txt Serialine_Package\
+          Compress-Archive -Path Serialine_Package -DestinationPath Serialine_Package.zip -Force
+
+      - name: Upload Serialine_Package (run artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Serialine_Package
+          path: Serialine_Package/
+
+      - name: Publish as the latest release
+        if: github.ref_name == github.event.repository.default_branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete serialine-latest --yes --cleanup-tag || true
+          gh release create serialine-latest Serialine_Package.zip \
+            --target "$GITHUB_SHA" \
+            --title "UMS Serialine - latest build" \
+            --notes "Serialine_Package.zip contains Serialine.exe and printer_settings.txt. Unzip it onto a memory stick and copy the Serialine_Package folder to the client laptop. Built from commit $GITHUB_SHA." \
+            --latest

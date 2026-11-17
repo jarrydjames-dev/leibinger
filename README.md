@@ -17,7 +17,18 @@ Full instructions are in the printed manuals:
 | `build_exe.bat` | Builds `Serialine.exe` into `Serialine_Package\` (run on a PC with Python) |
 | `requirements.txt` | Python packages (`pip install -r requirements.txt`) |
 
-## Quick start
+## Download Serialine.exe (no Windows PC needed)
+
+GitHub builds `Serialine.exe` automatically on a Windows machine whenever `serialine.py`,
+`printer_settings.txt` or `requirements.txt` changes.
+
+- **Latest build:** [Releases → UMS Serialine - latest build](https://github.com/jarrydjames-dev/leibinger/releases/latest) → `Serialine_Package.zip`
+- **Build again on demand:** Actions → *Build Serialine.exe* → *Run workflow*
+
+`Serialine_Package.zip` holds the `Serialine_Package` folder with `Serialine.exe` and
+`printer_settings.txt`. Unzip it onto a memory stick and copy the folder to the client PC.
+
+## Quick start (build it yourself on a Windows PC)
 
 1. Double-click `build_exe.bat`. It creates `Serialine_Package\Serialine.exe` and `printer_settings.txt`.
 2. Copy `Serialine_Package` to the client PC and put the serial files in it.
